@@ -1,21 +1,27 @@
 mod config;
-use config::TapeManifest;
-use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
 use anyhow::{Context, Result};
+use config::TapeManifest;
+use std::path::PathBuf;
+use walkdir::WalkDir;
 
 fn main() -> anyhow::Result<()> {
-    let tape_path = get_tape_config_path("foo")?;
-
+    let tape_path = get_tape_config_path("foo")?.join("tape.toml");
 
     if tape_path.is_file() {
         let tape = TapeManifest::load_from_file(&tape_path)?;
         get_tape_properties(tape, &tape_path)?;
     } else {
-        eprintln!("Error: Tape path not found at {:?}", tape_path);
+        eprintln!("Error: Tape path not found at {:?}", &tape_path);
+    }
+
+    if let Some(parent_dir) = tape_path.parent() {
+        for entry in WalkDir::new(parent_dir) {
+            println!("{:?}", entry?.file_name());
+        }
     }
 
     Ok(())
+
 }
 
 fn get_tape_properties(tape: TapeManifest, tape_path: &PathBuf) -> anyhow::Result<()> {
@@ -62,9 +68,7 @@ fn get_tape_properties(tape: TapeManifest, tape_path: &PathBuf) -> anyhow::Resul
 }
 
 fn get_tape_config_path(tape_name: &str) -> Result<PathBuf> {
-
     let config_dir = dirs::config_local_dir().context("Could not locate home/config directory")?;
 
-    Ok(config_dir.join(tape_name).join("tape.toml"))
-    
+    Ok(config_dir.join(tape_name))
 }
