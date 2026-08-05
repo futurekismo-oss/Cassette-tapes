@@ -10,3 +10,4 @@ anyhow= "1.0"
 walkdir = "2.5"
 tempfile= "3.10"
 dirs = "5.0"
+clap = { version = "4.6.5", features = ["derive"] }

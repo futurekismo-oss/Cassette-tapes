@@ -26,16 +26,10 @@ pub struct Dependecies {
 #[derive(Debug, Deserialize, Default)]
 pub struct Hooks {
     #[serde(default)]
-    pub pre_insert: Vec<String>,
+    pub insert: Vec<String>,
 
     #[serde(default)]
-    pub post_insert: Vec<String>,
-
-    #[serde(default)]
-    pub pre_eject: Vec<String>,
-
-    #[serde(default)]
-    pub post_eject: Vec<String>,
+    pub eject: Vec<String>,
 }
 
 impl TapeManifest {

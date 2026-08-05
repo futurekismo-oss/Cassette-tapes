@@ -1,75 +1,20 @@
+mod commands;
 mod config;
-use anyhow::{Context, Result};
-use config::TapeManifest;
-use std::path::PathBuf;
-use walkdir::WalkDir;
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+struct Args {
+    commands: String,
+}
+
+pub const APP_NAME: &str = "tapes";
 
 fn main() -> anyhow::Result<()> {
-    let tape_path = get_tape_config_path("foo")?.join("tape.toml");
+    let args = Args::parse();
 
-    if !tape_path.is_file() {
-        eprintln!("Error: Tape path not found at {:?}", tape_path);
-        return Ok(()); // Early exit if the manifest doesn't exist
-    }
-
-    let tape = TapeManifest::load_from_file(&tape_path)?;
-    get_tape_properties(tape, &tape_path)?;
-
-    if let Some(parent_dir) = tape_path.parent() {
-        println!("\nFiles");
-        for entry in WalkDir::new(parent_dir).min_depth(1) {
-            println!("{:?}", entry?.path());
-        }
+    if args.commands == "show" {
+        commands::show::execute()?;
     }
 
     Ok(())
-}
-
-fn get_tape_properties(tape: TapeManifest, tape_path: &PathBuf) -> anyhow::Result<()> {
-    println!(
-        "Loaded tape: {} (v{}) from \"{}\"",
-        tape.tape.name,
-        tape.tape.version,
-        tape_path.display()
-    );
-
-    println!();
-
-    println!("Description: {}", tape.tape.desc);
-
-    println!();
-
-    let binaries = tape
-        .dependencies
-        .as_ref()
-        .and_then(|dep| dep.binaries.as_ref());
-
-    if let Some(bin) = binaries {
-        println!("Dependencies");
-        for n in bin.iter() {
-            println!(" - {}", n);
-        }
-    }
-
-    println!();
-
-    if let Some(targets) = &tape.targets {
-        for (target_name, target_path) in targets {
-            println!("{}: {}", target_name, target_path)
-        }
-    }
-
-    println!();
-
-    if let Some(hooks) = &tape.hooks {
-        println!("{:#?}", hooks)
-    }
-
-    Ok(())
-}
-
-fn get_tape_config_path(tape_name: &str) -> Result<PathBuf> {
-    let config_dir = dirs::config_local_dir().context("Could not locate home/config directory")?;
-
-    Ok(config_dir.join(tape_name))
 }
