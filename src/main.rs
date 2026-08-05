@@ -7,21 +7,22 @@ use walkdir::WalkDir;
 fn main() -> anyhow::Result<()> {
     let tape_path = get_tape_config_path("foo")?.join("tape.toml");
 
-    if tape_path.is_file() {
-        let tape = TapeManifest::load_from_file(&tape_path)?;
-        get_tape_properties(tape, &tape_path)?;
-    } else {
-        eprintln!("Error: Tape path not found at {:?}", &tape_path);
+    if !tape_path.is_file() {
+        eprintln!("Error: Tape path not found at {:?}", tape_path);
+        return Ok(()); // Early exit if the manifest doesn't exist
     }
 
+    let tape = TapeManifest::load_from_file(&tape_path)?;
+    get_tape_properties(tape, &tape_path)?;
+
     if let Some(parent_dir) = tape_path.parent() {
-        for entry in WalkDir::new(parent_dir) {
-            println!("{:?}", entry?.file_name());
+        println!("\nFiles");
+        for entry in WalkDir::new(parent_dir).min_depth(1) {
+            println!("{:?}", entry?.path());
         }
     }
 
     Ok(())
-
 }
 
 fn get_tape_properties(tape: TapeManifest, tape_path: &PathBuf) -> anyhow::Result<()> {
