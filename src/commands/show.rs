@@ -6,8 +6,8 @@ use walkdir::WalkDir;
 use yansi::{Color, Paint};
 
 fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
-    let config_dir = dirs::config_local_dir()
-        .context("Could not locate config directory")?
+    let config_dir = dirs::data_local_dir()
+        .context("Could not locate local directory")?
         .join(APP_NAME);
 
     if !config_dir.is_dir() {

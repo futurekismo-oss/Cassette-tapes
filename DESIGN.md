@@ -1,57 +1,114 @@
-# Tapes Design
+# Tape: Atomic Rice Switcher
 
-A lightweight, modular dotfile manager inspired by Nix flakes, built in Rust.
+A simple, atomic dotfile switcher for ricing. Switch between complete configuration setups with one command.
 
 ## Concept
-A "Tape" is a self-contained directory containing:
-- A `.config/` folder mirroring standard configuration structures.
-- A `tape.toml` file defining metadata and dependencies.
-- A `tape.lock` to ensure reproductibilty
 
-## `tape.toml` (Draft)
-```toml
-[tape]
-name = "example"
-version = "0.1.0"
+A **tape** is a self-contained rice directory. When you insert a tape, your entire `~/.config` is replaced atomically with the tape's contents. When you eject, your original config is restored.
 
-[dependencies]
-binaries = ["hyprland", "foot"]
+This is designed for ricers who:
+- Want to test complete setups quickly
+- Need a safety net to revert changes
+- Switch between different window manager or shell configurations
 
+## Structure
 
-[targets]
-zshrc = "~/.zshrc"
-"starship.toml" = '~/.config/starship.toml'
-
-[hooks]
-# Runs before symlinks are created
-pre_insert = ["echo 'Preparing Hyprland setup...'"]
-
-# Runs after symlinks are successfully created
-post_insert = [
-  "hyprctl reload",
-  "fc-cache -fv"
-]
-
-# Runs before active symlinks are removed
-pre_eject = []
-
-# Runs after active symlinks are removed
-post_eject = ["killall waybar"]
+```
+~/.local/share/tapes/
+├── my-hypr-rice/
+│   ├── tape.toml          # Tape metadata
+│   └── .config/
+│       ├── hypr/
+│       ├── waybar/
+│       └── ...
+└── my-sway-rice/
+    ├── tape.toml
+    └── .config/
+        └── ...
 ```
 
-tape - metadata
-dependencies - programs your rice depends on
-targets - for configs that dont follow the general ~/.config
-hooks - commands needed to setup your rice for other systems
+## `tape.toml`
 
+Each tape contains a manifest that defines metadata, dependencies, and lifecycle hooks.
+
+```toml
+[tape]
+name = "my-hypr-rice"
+version = "0.1.0"
+desc = "My Hyprland + Waybar setup"
+
+[dependencies]
+binaries = ["hyprland", "waybar", "foot"]
+
+[hooks]
+# Commands to run before the tape is activated
+insert = [
+  "echo 'Activating Hyprland rice...'",
+  "pkill -9 waybar || true"
+]
+
+# Commands to run after the tape is removed
+eject = [
+  "echo 'Rice deactivated'",
+  "killall waybar || true"
+]
+```
+
+- **`name`**: Tape identifier
+- **`version`**: Tape version
+- **`desc`**: Human-readable description
+- **`dependencies.binaries`**: Required programs (checked before insert)
+- **`hooks.insert`**: Commands run after the tape is symlinked into place
+- **`hooks.eject`**: Commands run after the tape is removed
 
 ## Core Operations
-- Insert (tape insert <path>): Safely symlinks tape contents into ~/.config.
-- Eject (tape eject <name>): Removes active symlinks for a given tape.
-- List (tape list): Shows currently active tapes.
-- Info (tape info <path>): Inspects a tape's manifest before installing.
-- Run (tap run <link>): Run external tapes 
 
-## Safety & State
-- Tracks installed files in a local state file to allow clean uninstalls.
-- Avoids overwriting unmanaged files unless forced.
+| Command | Description |
+|---------|-------------|
+| `tape insert <name>` | Replace `~/.config` with tape from `~/.local/share/tapes/` |
+| `tape insert .` | Insert tape from current directory |
+| `tape insert --path <path>` | Insert tape from arbitrary path |
+| `tape eject` | Restore original `~/.config` from backup |
+| `tape show` | List all discovered tapes |
+| `tape show <name>` | Show details for a specific tape |
+
+## How It Works
+
+### Insert Flow
+1. Validate the tape exists and has a valid `tape.toml`
+2. Check dependencies (if any binaries are missing, abort)
+3. Rename `~/.config` → `~/.config.bak` (or `~/.config.bak.1`, etc.)
+4. Symlink tape directory → `~/.config`
+5. Run insert hooks
+
+### Eject Flow  
+1. Remove `~/.config` symlink
+2. Rename `~/.config.bak` → `~/.config` (restore latest backup)
+3. Run eject hooks
+
+## Safety
+
+- **Atomic**: Insert and eject are atomic operations — your config is never in a half-state
+- **Backup**: Original `~/.config` is always backed up before replacement
+- **Dependency checks**: Missing binaries are caught before switching
+- **No overwrites**: Uses backups, never clobbers existing files
+
+## Usage Examples
+
+```bash
+# Clone someone's rice
+git clone https://github.com/user/awesome-rice
+cd awesome-rice
+
+# Try it out
+tape insert .
+
+# Don't like it? Revert instantly
+tape eject
+
+# List your installed tapes
+tape show --list
+
+# Use a tape by name (from ~/.local/share/tapes/)
+tape insert my-hypr-rice
+```
