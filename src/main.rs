@@ -1,6 +1,7 @@
 mod commands;
 mod config;
 use clap::{Parser, Subcommand};
+use yansi::{Paint};
 
 #[derive(Parser, Debug)]
 #[command(name = "tape")]
@@ -34,7 +35,7 @@ fn main() -> anyhow::Result<()> {
                 if !list {
                     commands::show::show_all_tapes()?
                 } else {
-                    println!("[KNOWN TAPES]");
+                    println!("{}", "Known tapes: ".bold().italic().green());
                     commands::show::list_all_known_tapes()?
                 }
             }

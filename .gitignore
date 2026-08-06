@@ -1,5 +1,7 @@
 /target
 Cargo.lock
+.envrc
+.direnv/
 
 
 # Added by cargo
