@@ -1,5 +1,5 @@
 {
-  description = "Soundcloud-tui Flake";
+  description = "Cassette rices flakes";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   inputs.systems.url = "github:nix-systems/default";
