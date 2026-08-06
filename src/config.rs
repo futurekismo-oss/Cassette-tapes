@@ -24,6 +24,7 @@ pub struct Dependecies {
 }
 
 #[derive(Debug, Deserialize, Default)]
+#[allow(dead_code)] // DEBUG
 pub struct Hooks {
     #[serde(default)]
     pub insert: Vec<String>,

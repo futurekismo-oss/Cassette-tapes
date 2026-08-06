@@ -1,19 +1,44 @@
 mod commands;
 mod config;
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-struct Args {
-    commands: String,
+#[command(name = "tape")]
+#[command(about = "A tool for managing rice installations", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    commands: Commands,
+}
+
+#[derive(Subcommand, Debug)]
+enum Commands {
+    Show {
+        name: Option<String>,
+
+        #[arg(long)]
+        list: bool,
+    },
 }
 
 pub const APP_NAME: &str = "tapes";
 
 fn main() -> anyhow::Result<()> {
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    if args.commands == "show" {
-        commands::show::execute()?;
+    match &cli.commands {
+        Commands::Show { name, list } => match name {
+            Some(name) => {
+                commands::show::show_specific_tape(name)?;
+            }
+            None => {
+                if !list {
+                    commands::show::show_all_tapes()?
+                } else {
+                    println!("[KNOWN TAPES]");
+                    commands::show::list_all_known_tapes()?
+                }
+            }
+        },
     }
 
     Ok(())

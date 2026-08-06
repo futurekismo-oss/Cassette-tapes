@@ -1,36 +1,58 @@
 use crate::config::TapeManifest;
 use crate::APP_NAME;
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use std::{
     fs,
-    path::{Path, PathBuf},
+    path::Path,
 };
 use walkdir::WalkDir;
 
-pub fn execute() -> Result<()> {
+fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
     let config_dir = dirs::config_local_dir()
-        .context("Could not locate config direcoty")?
+        .context("Could not locate config directory")?
         .join(APP_NAME);
 
     if !config_dir.is_dir() {
-        return Ok(());
+        return Ok(Vec::new());
     }
 
+    let mut tapes = Vec::new();
     for entry in fs::read_dir(&config_dir)?.flatten() {
         let path = entry.path();
-
         if path.is_dir() {
             let manifest_path = path.join("tape.toml");
-
             if manifest_path.is_file() {
                 if let Ok(tape) = TapeManifest::load_from_file(&manifest_path) {
-                    get_tape_properties(&tape, &manifest_path);
-                    println!("\n==========================================\n");
+                    tapes.push((tape, manifest_path));
                 }
             }
         }
     }
+    Ok(tapes)
+}
 
+pub fn show_all_tapes() -> Result<()> {
+    for (tape, manifest_path) in load_all_tapes()? {
+        get_tape_properties(&tape, &manifest_path);
+        println!("\n==========================================\n");
+    }
+    Ok(())
+}
+
+pub fn show_specific_tape(name: &str) -> Result<()> {
+    for (tape, manifest_path) in load_all_tapes()? {
+        if tape.tape.name == name {
+            get_tape_properties(&tape, &manifest_path);
+            return Ok(());
+        }
+    }
+    bail!("Tape '{}' was not found", name);
+}
+
+pub fn list_all_known_tapes() -> Result<()> {
+    for (tape, _) in load_all_tapes()? {
+        println!(" - {}: {}", tape.tape.name, tape.tape.desc);
+    }
     Ok(())
 }
 
@@ -86,8 +108,3 @@ pub fn get_tape_properties(tape: &TapeManifest, tape_path: &Path) {
     }
 }
 
-// NOTE: Unused weird, I'll keep it around thou
-// pub fn get_tape_config_path(tape_name: &str) -> Result<PathBuf> {
-//     let config_dir = dirs::config_local_dir().context("Could not locate config directory")?;
-//     Ok(config_dir.join(APP_NAME).join(tape_name))
-// }
