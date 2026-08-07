@@ -5,7 +5,12 @@ use std::os::unix::fs::symlink;
 use std::{fs, path::PathBuf, process::Command};
 use yansi::Paint;
 
-pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool, write: bool) -> Result<()> {
+pub fn insert(
+    name: Option<String>,
+    path: Option<PathBuf>,
+    dry_run: bool,
+    write: bool,
+) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
     let local_dir: PathBuf = dirs::data_local_dir()
@@ -48,7 +53,7 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool, write:
     symlink(&actual_path, &user_config).context("Failed to symlink")?;
 
     let mut perms = fs::metadata(&actual_path)?.permissions();
-    
+
     perms.set_readonly(!write);
     fs::set_permissions(&actual_path, perms)?;
 
@@ -66,12 +71,17 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool, write:
                 println!("{}", "Runnning insert hooks...".bold().bright_red());
                 run_insert_hooks(&tape)?;
 
-                
                 println!("{}{}", "Inserted: ".bold().green(), tape.tape.name.bold());
             }
         }
     }
 
+    println!(
+        "{}",
+        "It is recommended to relogin or reboot after a tape is inserted"
+            .black()
+            .on_bright_yellow()
+    );
 
     Ok(())
 }
