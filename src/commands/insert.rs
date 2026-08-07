@@ -8,7 +8,9 @@ use yansi::Paint;
 pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
-    if !source_path.exists() {
+    let local_dir: PathBuf = dirs::data_local_dir().context("Could not locate user local dir")?.join(APP_NAME);
+
+    if !source_path.exists() || source_path == local_dir {
         let identifier = name.unwrap_or_else(|| source_path.display().to_string());
         bail!("Tape '{identifier}' does not exist at {:?}", source_path);
     }
@@ -44,7 +46,7 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
 
     println!(
         "{} ~/{} to ~/{}",
-        "Linked: ".bold().blue(),
+        "Symlinked: ".bold().blue(),
         &actual_path.strip_prefix(&home_dir)?.display().magenta(),
         &user_config.strip_prefix(&home_dir)?.display().magenta()
     );
@@ -90,7 +92,7 @@ pub fn get_available_backup_path(target_path: &PathBuf) -> PathBuf {
 
     while std::fs::symlink_metadata(&backup_path).is_ok() {
         // DEBUG
-        panic!("Backup of confing already found")
+        panic!("Backup of confing already found") // i SHouldn't use panic here but i dont know anything else
         // is there smth like panic that can break out of code?
     }
 
@@ -118,7 +120,7 @@ fn run_command(line: &str) -> Result<()> {
         return Ok(());
     }
 
-    print!("\t");
+    // LATER: find a way to modify status output
     let status = Command::new("sh").arg("-c").arg(line).status()?;
 
     if !status.success() {

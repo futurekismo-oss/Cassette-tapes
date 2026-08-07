@@ -1,7 +1,10 @@
 use crate::config::TapeManifest;
 use crate::APP_NAME;
 use anyhow::{bail, Context, Result};
-use std::{fs, path::Path};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use walkdir::WalkDir;
 use yansi::{Color, Paint};
 
@@ -37,13 +40,39 @@ pub fn show_all_tapes() -> Result<()> {
 }
 
 pub fn show_specific_tape(name: &str) -> Result<()> {
-    for (tape, manifest_path) in load_all_tapes()? {
-        if tape.tape.name == name {
-            display_tape_properties(&tape, &manifest_path);
-            return Ok(());
+    let specificed_tape_path = crate::commands::insert::locate_local_dir()?.join(name);
+
+    let local_dir: PathBuf = dirs::data_local_dir()
+        .context("Could not locate user local dir")?
+        .join(APP_NAME);
+
+    if !specificed_tape_path.exists() || specificed_tape_path == local_dir {
+        let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
+
+        let path_identifier = specificed_tape_path.strip_prefix(home_dir)?.parent().unwrap();
+
+        bail!("Tape '{name}' does not exist at ~/{}", path_identifier.to_string_lossy());
+    }
+
+    if specificed_tape_path.is_dir() {
+        let manifest_path = specificed_tape_path.join("tape.toml");
+        if manifest_path.is_file() {
+            if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
+                display_tape_properties(&tape, &specificed_tape_path);
+                // return Ok(());
+            }
         }
     }
-    bail!("Tape '{}' was not found", name);
+
+    Ok(())
+
+    // for (tape, manifest_path) in load_all_tapes()? {
+    //     if tape.tape.name == name {
+    //         display_tape_properties(&tape, &manifest_path);
+    //         return Ok(());
+    //     }
+    // }
+    // bail!("Tape '{}' was not found", name);
 }
 
 pub fn list_all_known_tapes() -> Result<()> {

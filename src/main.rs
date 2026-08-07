@@ -36,24 +36,14 @@ enum Commands {
         /// Run but don't replace any files
         #[arg(long)]
         dry_run: bool,
+
+        /// First eject the current tape if any before inserting
+        #[arg(short, long)]
+        reinsert: bool,
     },
 
     /// Eject the current tape if you used any
     Eject,
-
-    /// Ejects the old tape and inserts the new one
-    Reinsert {
-        /// Name of tape to insert
-        name: Option<String>,
-
-        /// Path of the tape to insert
-        #[arg(short, long)]
-        path: Option<PathBuf>,
-
-        /// Run but don't replace any files
-        #[arg(long)]
-        dry_run: bool,
-    },
 }
 
 pub const APP_NAME: &str = "tapes";
@@ -80,16 +70,17 @@ fn main() -> anyhow::Result<()> {
             name,
             path,
             dry_run,
+            reinsert,
         } => {
-            commands::insert::insert(name, path, dry_run)?;
+            if !reinsert {
+                commands::insert::insert(name, path, dry_run)?;
+            } else {
+                commands::eject::eject()?;
+                commands::insert::insert(name, path, dry_run)?;
+            }
         }
 
         Commands::Eject => commands::eject::eject()?,
-
-        Commands::Reinsert { name, path, dry_run } => {
-            commands::eject::eject()?;
-            commands::insert::insert(name, path, dry_run)?
-        }
     }
 
     Ok(())
