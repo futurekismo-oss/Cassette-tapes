@@ -41,9 +41,9 @@ enum Commands {
         #[arg(short, long)]
         reinsert: bool,
 
-        /// Whether to allow write access to the tape
-        #[arg(short, long)]
-        write: bool,
+        // /// Whether to allow write access to the tape
+        // #[arg(short, long)]
+        // write: bool,
     },
 
     /// Eject the current tape if you used any
@@ -74,13 +74,13 @@ fn main() -> anyhow::Result<()> {
             name,
             path,
             dry_run,
-            reinsert, write
+            reinsert
         } => {
             if !reinsert {
-                commands::insert::insert(name, path, dry_run, write)?;
+                commands::insert::insert(name, path, dry_run)?;
             } else {
                 commands::eject::eject()?;
-                commands::insert::insert(name, path, dry_run, write)?;
+                commands::insert::insert(name, path, dry_run)?;
             }
         }
 

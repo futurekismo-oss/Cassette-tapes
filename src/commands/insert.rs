@@ -1,15 +1,17 @@
 use crate::config::TapeManifest;
 use crate::APP_NAME;
 use anyhow::{bail, Context, Result};
+use std::collections::HashSet;
+use std::io::Write;
 use std::os::unix::fs::symlink;
 use std::{fs, path::PathBuf, process::Command};
+use walkdir::WalkDir;
 use yansi::Paint;
 
 pub fn insert(
     name: Option<String>,
     path: Option<PathBuf>,
     dry_run: bool,
-    write: bool,
 ) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
@@ -52,11 +54,15 @@ pub fn insert(
 
     symlink(&actual_path, &user_config).context("Failed to symlink")?;
 
-    let mut perms = fs::metadata(&actual_path)?.permissions();
+    // Save original tape file list for cleanup on eject
+    let tape_files = get_relative_file_paths(&actual_path)?;
+    let tape_files_path = available_backup_path.with_extension("tape_files");
+    let mut file = fs::File::create(&tape_files_path)?;
+    for path in &tape_files {
+        writeln!(file, "{}", path)?;
+    }
 
-    perms.set_readonly(!write);
-    fs::set_permissions(&actual_path, perms)?;
-
+    
     println!(
         "{} ~/{} to ~/{}",
         "Symlinked: ".bold().blue(),
@@ -92,6 +98,19 @@ pub fn locate_local_dir() -> Result<PathBuf> {
         .join(APP_NAME);
 
     Ok(config_dir)
+}
+
+fn get_relative_file_paths(dir: &std::path::Path) -> Result<HashSet<String>> {
+    let mut files = HashSet::new();
+    for entry in WalkDir::new(dir) {
+        let entry = entry?;
+        if entry.file_type().is_file() {
+            if let Ok(relative) = entry.path().strip_prefix(dir) {
+                files.insert(relative.display().to_string());
+            }
+        }
+    }
+    Ok(files)
 }
 
 pub fn get_source_path(name: &Option<String>, path: Option<PathBuf>) -> Result<PathBuf> {
