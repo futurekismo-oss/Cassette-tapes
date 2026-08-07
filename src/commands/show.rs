@@ -49,9 +49,15 @@ pub fn show_specific_tape(name: &str) -> Result<()> {
     if !specificed_tape_path.exists() || specificed_tape_path == local_dir {
         let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
 
-        let path_identifier = specificed_tape_path.strip_prefix(home_dir)?.parent().unwrap();
+        let path_identifier = specificed_tape_path
+            .strip_prefix(home_dir)?
+            .parent()
+            .unwrap();
 
-        bail!("Tape '{name}' does not exist at ~/{}", path_identifier.to_string_lossy());
+        bail!(
+            "Tape '{name}' does not exist at ~/{}",
+            path_identifier.to_string_lossy()
+        );
     }
 
     if specificed_tape_path.is_dir() {
@@ -177,21 +183,26 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
     }
 
     // --- Files ---
-    if let Some(parent_dir) = tape_path.parent() {
-        println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
-        for entry in WalkDir::new(parent_dir).min_depth(1).into_iter().flatten() {
-            if !entry.file_type().is_file() {
-                continue;
-            }
-            if let Ok(file) = entry.path().strip_prefix(parent_dir) {
-                println!(
-                    "  {} {}",
-                    Paint::new("•").fg(Color::Green),
-                    Paint::new(file.display()).fg(Color::White)
-                );
-            }
+    // if let Some(parent_dir) = tape_path. {
+    println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
+    for entry in WalkDir::new(tape_path)
+        .min_depth(1)
+        .max_depth(2)
+        .into_iter()
+        .flatten()
+    {
+        if !entry.file_type().is_file() {
+            continue;
+        }
+        if let Ok(file) = entry.path().strip_prefix(tape_path) {
+            println!(
+                "  {} {}",
+                Paint::new("•").fg(Color::Green),
+                Paint::new(file.display()).fg(Color::White)
+            );
         }
     }
+    // }
 
     println!(
         "\n{}\n",

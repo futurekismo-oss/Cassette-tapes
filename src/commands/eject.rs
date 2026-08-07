@@ -28,16 +28,20 @@ pub fn eject() -> Result<()> {
 
     let backup = get_lastest_backup(&user_config);
 
+    
+
     if backup.exists() {
         if user_config.is_dir() {
             let manifest_path = user_config.join("tape.toml");
             if manifest_path.is_file() {
-                if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
+                if let Ok(tape) = TapeManifest::load_from_file(&manifest_path) {
                     fs::remove_file(&user_config)?;
 
                     fs::rename(&backup, &user_config)?;
 
-                    println!("{}", "Runnning eject hooks...".bold().black().on_red());
+                    println!("{} {}", "Ejected:".bold().green(), tape.tape.name.bold());
+
+                    println!("{}", "Runnning eject hooks...".bold().bright_red());
 
                     run_eject_hooks(tape)?;
                 }

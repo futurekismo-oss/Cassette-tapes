@@ -5,13 +5,15 @@ use std::os::unix::fs::symlink;
 use std::{fs, path::PathBuf, process::Command};
 use yansi::Paint;
 
-pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
+pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool, write: bool) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
-    let local_dir: PathBuf = dirs::data_local_dir().context("Could not locate user local dir")?.join(APP_NAME);
+    let local_dir: PathBuf = dirs::data_local_dir()
+        .context("Could not locate user local dir")?
+        .join(APP_NAME);
 
+    let identifier = name.unwrap_or_else(|| source_path.display().to_string());
     if !source_path.exists() || source_path == local_dir {
-        let identifier = name.unwrap_or_else(|| source_path.display().to_string());
         bail!("Tape '{identifier}' does not exist at {:?}", source_path);
     }
 
@@ -37,12 +39,18 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
         "{} ~/{} to ~/{}",
         "Renamed: ".bold().blue(),
         &user_config.strip_prefix(&home_dir)?.display().magenta(),
-        &available_backup_path.strip_prefix(&home_dir)?.display().magenta()
+        &available_backup_path
+            .strip_prefix(&home_dir)?
+            .display()
+            .magenta()
     );
 
-    
-
     symlink(&actual_path, &user_config).context("Failed to symlink")?;
+
+    let mut perms = fs::metadata(&actual_path)?.permissions();
+    
+    perms.set_readonly(!write);
+    fs::set_permissions(&actual_path, perms)?;
 
     println!(
         "{} ~/{} to ~/{}",
@@ -55,10 +63,15 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
         let manifest_path = source_path.join("tape.toml");
         if manifest_path.is_file() {
             if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
-                run_insert_hooks(tape)?;
+                println!("{}", "Runnning insert hooks...".bold().bright_red());
+                run_insert_hooks(&tape)?;
+
+                
+                println!("{}{}", "Inserted: ".bold().green(), tape.tape.name.bold());
             }
         }
     }
+
 
     Ok(())
 }
@@ -93,19 +106,17 @@ pub fn get_available_backup_path(target_path: &PathBuf) -> PathBuf {
     while std::fs::symlink_metadata(&backup_path).is_ok() {
         // DEBUG
         panic!("Backup of confing already found") // i SHouldn't use panic here but i dont know anything else
-        // is there smth like panic that can break out of code?
+                                                  // is there smth like panic that can break out of code?
     }
 
     backup_path
 }
 
-pub fn run_insert_hooks(tape: TapeManifest) -> Result<()> {
+pub fn run_insert_hooks(tape: &TapeManifest) -> Result<()> {
     if let Some(hooks) = &tape.hooks {
         if !hooks.insert.is_empty() {
             for hook in &hooks.insert {
-                println!(" {} {}",
-                    Paint::new("•").red(),
-                    hook.red());
+                println!(" {} {}", Paint::new("•").red(), hook.red());
 
                 run_command(hook)?;
             }
@@ -126,7 +137,6 @@ fn run_command(line: &str) -> Result<()> {
     if !status.success() {
         println!("Command returned a non-exit code: {:?}", status.code());
     }
-
 
     Ok(())
 }
