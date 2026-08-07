@@ -5,7 +5,7 @@ use std::{fs, path::Path};
 use walkdir::WalkDir;
 use yansi::{Color, Paint};
 
-fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
+pub fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
     let config_dir = dirs::data_local_dir()
         .context("Could not locate local directory")?
         .join(APP_NAME);
@@ -101,18 +101,18 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         }
     }
 
-    if let Some(targets) = &tape.targets {
-        println!("\n{}", Paint::new("Targets").bold().fg(Color::Yellow));
-        for (target_name, target_path) in targets {
-            println!(
-                "  {} {}: {}",
-                Paint::new("•").fg(Color::Green),
-                Paint::new(target_name).fg(Color::Magenta),
-                Paint::new(target_path).fg(Color::White)
-            );
-        }
-        println!();
-    }
+    // if let Some(targets) = &tape.targets {
+    //     println!("\n{}", Paint::new("Targets").bold().fg(Color::Yellow));
+    //     for (target_name, target_path) in targets {
+    //         println!(
+    //             "  {} {}: {}",
+    //             Paint::new("•").fg(Color::Green),
+    //             Paint::new(target_name).fg(Color::Magenta),
+    //             Paint::new(target_path).fg(Color::White)
+    //         );
+    //     }
+    //     println!();
+    // }
 
     // --- hooks ---
     if let Some(hooks) = &tape.hooks {

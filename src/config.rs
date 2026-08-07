@@ -1,13 +1,12 @@
 use anyhow::{Context, Result};
 use serde::Deserialize;
 use std::path::Path;
-use std::{collections::HashMap, fs};
+use std::fs;
 
 #[derive(Debug, Deserialize)]
 pub struct TapeManifest {
     pub tape: TapeInfo,
     pub dependencies: Option<Dependecies>,
-    pub targets: Option<HashMap<String, String>>,
     pub hooks: Option<Hooks>,
 }
 
