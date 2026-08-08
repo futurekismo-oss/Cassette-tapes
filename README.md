@@ -33,8 +33,7 @@ git clone https://github.com/futurekismo/cassette-rices
 cd cassette-rices
 
 # Build and install
-cargo build --release
-sudo cp target/release/tapes /usr/local/bin/tape
+cargo install --path .
 ```
 
 ### Using Nix
