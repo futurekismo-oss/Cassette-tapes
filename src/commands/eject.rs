@@ -30,39 +30,11 @@ pub fn eject() -> Result<()> {
 
     let backup = get_lastest_backup(&user_config);
 
-    
-
     if backup.exists() {
         if user_config.is_dir() {
             let manifest_path = user_config.join("tape.toml");
             if manifest_path.is_file() {
                 if let Ok(tape) = TapeManifest::load_from_file(&manifest_path) {
-                    // Clean up generated files in tape before ejecting
-                    let tape_files_path = backup.with_extension("tape_files");
-                    if tape_files_path.exists() {
-                        let original_files: HashSet<String> = fs::read_to_string(&tape_files_path)
-                            .ok()
-                            .map(|s| s.lines().map(|line| line.to_string()).collect())
-                            .unwrap_or_default();
-
-                        // Get the actual tape directory (symlink target)
-                        if let Ok(target) = fs::read_link(&user_config) {
-                            let current_files: HashSet<String> = WalkDir::new(&target)
-                                .into_iter()
-                                .filter_map(|e| e.ok())
-                                .filter(|e| e.file_type().is_file())
-                                .filter_map(|e| {
-                                    e.path().strip_prefix(&target).ok().map(|p| p.to_string_lossy().to_string())
-                                })
-                                .collect();
-
-                            for file in current_files.difference(&original_files) {
-                                let path_to_remove = target.join(file);
-                                let _ = fs::remove_file(&path_to_remove);
-                            }
-                        }
-                    }
-
                     fs::remove_file(&user_config)?;
 
                     fs::rename(&backup, &user_config)?;

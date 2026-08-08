@@ -8,11 +8,7 @@ use std::{fs, path::PathBuf, process::Command};
 use walkdir::WalkDir;
 use yansi::Paint;
 
-pub fn insert(
-    name: Option<String>,
-    path: Option<PathBuf>,
-    dry_run: bool,
-) -> Result<()> {
+pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
     let local_dir: PathBuf = dirs::data_local_dir()
@@ -54,14 +50,7 @@ pub fn insert(
 
     symlink(&actual_path, &user_config).context("Failed to symlink")?;
 
-    // Save original tape file list for cleanup on eject
-    let tape_files = get_relative_file_paths(&actual_path)?;
-    let tape_files_path = available_backup_path.with_extension("tape_files");
-    let mut file = fs::File::create(&tape_files_path)?;
-    for path in &tape_files {
-        writeln!(file, "{}", path)?;
-    }
-
+    
     
     println!(
         "{} ~/{} to ~/{}",
@@ -69,7 +58,6 @@ pub fn insert(
         &actual_path.strip_prefix(&home_dir)?.display().magenta(),
         &user_config.strip_prefix(&home_dir)?.display().magenta()
     );
-
     if source_path.is_dir() {
         let manifest_path = source_path.join("tape.toml");
         if manifest_path.is_file() {
