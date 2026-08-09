@@ -1,8 +1,13 @@
 mod commands;
 mod config;
+mod dependencies;
+use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
-use std::path::PathBuf;
+use std::os::unix::fs::symlink;
+use std::{fs, path::PathBuf};
 use yansi::Paint;
+
+use crate::commands::insert::locate_local_dir;
 
 #[derive(Parser, Debug)]
 #[command(name = "tape")]
@@ -40,7 +45,6 @@ enum Commands {
         /// First eject the current tape if any before inserting
         #[arg(short, long)]
         reinsert: bool,
-
         // /// Whether to allow write access to the tape
         // #[arg(short, long)]
         // write: bool,
@@ -52,7 +56,9 @@ enum Commands {
 
 pub const APP_NAME: &str = "tapes";
 
-fn main() -> anyhow::Result<()> {
+fn main() -> Result<()> {
+    create_tapes_symlink()?;
+
     let cli = Cli::parse();
 
     match cli.commands {
@@ -74,7 +80,7 @@ fn main() -> anyhow::Result<()> {
             name,
             path,
             dry_run,
-            reinsert
+            reinsert,
         } => {
             if !reinsert {
                 commands::insert::insert(name, path, dry_run)?;
@@ -86,6 +92,26 @@ fn main() -> anyhow::Result<()> {
 
         Commands::Eject => commands::eject::eject()?,
     }
+
+    Ok(())
+}
+
+fn create_tapes_symlink() -> Result<()> {
+    let tapes_path: PathBuf = dirs::home_dir()
+        .context("Could not find home directory")?
+        .join(".tapes");
+
+    if tapes_path.is_symlink() {
+        if let Ok(target) = fs::read_link(&tapes_path) {
+            if target.to_string_lossy().contains(".local/share/tapes") {
+                return Ok(());
+            }
+        }
+    }
+
+    let actual_path: PathBuf = locate_local_dir()?;
+
+    symlink(&actual_path, &tapes_path).context("Failed to symlink")?;
 
     Ok(())
 }
