@@ -114,7 +114,7 @@ pub fn get_available_backup_path(target_path: &Path) -> PathBuf {
 
     while std::fs::symlink_metadata(&backup_path).is_ok() {
         // DEBUG
-        panic!("Backup of confing already found") // i SHouldn't use panic here but i dont know anything else
+        panic!("Backup of confing already found") // i Shouldn't use panic here but i dont know anything else
                                                   // is there smth like panic that can break out of code?
     }
 

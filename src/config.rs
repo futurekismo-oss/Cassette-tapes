@@ -6,7 +6,6 @@ use std::fs;
 #[derive(Debug, Deserialize)]
 pub struct TapeManifest {
     pub tape: TapeInfo,
-    pub dependencies: Option<Dependecies>,
     pub hooks: Option<Hooks>,
 }
 
@@ -15,15 +14,11 @@ pub struct TapeInfo {
     pub name: String,
     pub version: String,
     pub desc: String,
+    pub dependencies: Option<Vec<String>>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct Dependecies {
-    pub binaries: Option<Vec<String>>,
-}
 
 #[derive(Debug, Deserialize, Default)]
-#[allow(dead_code)] // DEBUG
 pub struct Hooks {
     #[serde(default)]
     pub insert: Vec<String>,

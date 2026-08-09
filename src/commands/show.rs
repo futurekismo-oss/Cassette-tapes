@@ -5,7 +5,6 @@ use std::{
     fs,
     path::{Path, PathBuf},
 };
-use walkdir::WalkDir;
 use yansi::{Color, Paint};
 
 pub fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
@@ -107,23 +106,19 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
 
     // --- Description ---
     println!(
-        "{}: {}",
+        "{} {}",
         Paint::new("Description:").bold().fg(Color::Yellow),
         Paint::new(&tape.tape.desc).fg(Color::White)
     );
 
     // --- Dependencies ---
-    if let Some(binaries) = tape
-        .dependencies
-        .as_ref()
-        .and_then(|dep| dep.binaries.as_ref())
-    {
+    if let Some(deps) = &tape.tape.dependencies {
         println!("\n{}", Paint::new("Dependencies").bold().fg(Color::Yellow));
-        for binary in binaries {
+        for dep in deps {
             println!(
                 "  {} {}",
                 Paint::new("•").fg(Color::Green),
-                Paint::new(binary).fg(Color::White)
+                Paint::new(dep).fg(Color::White)
             );
         }
     }
