@@ -161,28 +161,6 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         }
     }
 
-    // --- Files ---
-    // if let Some(parent_dir) = tape_path. {
-    println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
-    for entry in WalkDir::new(tape_path)
-        .min_depth(1)
-        .max_depth(2)
-        .into_iter()
-        .flatten()
-    {
-        if !entry.file_type().is_file() {
-            continue;
-        }
-        if let Ok(file) = entry.path().strip_prefix(tape_path) {
-            println!(
-                "  {} {}",
-                Paint::new("•").fg(Color::Green),
-                Paint::new(file.display()).fg(Color::White)
-            );
-        }
-    }
-    // }
-
     println!(
         "\n{}\n",
         Paint::new("────────────────────────────────────────────────────────────").dim()
