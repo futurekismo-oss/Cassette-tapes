@@ -4,7 +4,7 @@ mod dependencies;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::os::unix::fs::symlink;
-use std::{fs, path::PathBuf, process::Command};
+use std::{fs, path::PathBuf, process::{Command, exit}};
 use yansi::Paint;
 
 use crate::commands::insert::locate_local_dir;
@@ -134,4 +134,9 @@ pub fn run_command(line: &str) -> Result<()> {
     }
 
     Ok(())
+}
+
+pub fn quit(message: &str) -> ! {
+    eprintln!("{}", message);
+    exit(1);
 }

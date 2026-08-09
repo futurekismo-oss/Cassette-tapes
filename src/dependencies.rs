@@ -2,6 +2,7 @@ use crate::config::TapeManifest;
 use anyhow::Result;
 use std::process::Command;
 use yansi::Paint;
+use crate::quit;
 
 pub fn check_dependencies(tape: &TapeManifest) -> Result<()> {
     if let Some(dependencies) = &tape.tape.dependencies {
@@ -10,7 +11,8 @@ pub fn check_dependencies(tape: &TapeManifest) -> Result<()> {
             let result = Command::new("sh").arg("-c").arg(&line).output()?;
 
             if result.stdout.is_empty() {
-                panic!("Dependency `{}` not found", deps.bold())
+                quit(&format!("Dependency `{}` not found", deps.bold()))
+
             }
         }
     }

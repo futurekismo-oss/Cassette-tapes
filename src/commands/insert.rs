@@ -1,4 +1,5 @@
 use crate::config::TapeManifest;
+use crate::quit;
 use crate::dependencies::check_dependencies;
 use crate::{run_command, APP_NAME};
 use anyhow::{bail, Context, Result};
@@ -113,9 +114,7 @@ pub fn get_available_backup_path(target_path: &Path) -> PathBuf {
     let backup_path = target_path.with_file_name(format!("{file_name}.bak"));
 
     while std::fs::symlink_metadata(&backup_path).is_ok() {
-        // DEBUG
-        panic!("Backup of confing already found") // i Shouldn't use panic here but i dont know anything else
-                                                  // is there smth like panic that can break out of code?
+        quit(&format!("{}", "Backup of config already found".bold().red()))
     }
 
     backup_path
