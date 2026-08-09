@@ -1,9 +1,7 @@
 use crate::config::TapeManifest;
 use anyhow::{bail, Context, Result};
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::{fs, process::Command};
-use walkdir::WalkDir;
 use yansi::Paint;
 
 fn is_tape_symlink(path: &Path) -> bool {
@@ -53,8 +51,8 @@ pub fn eject() -> Result<()> {
         println!(
             "{} ~/{} from ~/{}",
             "Restored: ".bold().blue(),
-            &user_config.strip_prefix(&home_dir)?.display().magenta(),
-            &backup.strip_prefix(&home_dir)?.display().magenta()
+            user_config.strip_prefix(&home_dir)?.display().magenta(),
+            backup.strip_prefix(&home_dir)?.display().magenta()
         );
 
         println!("{}", "Restored user original config".bold().green())
@@ -71,9 +69,7 @@ fn get_lastest_backup(path: &Path) -> PathBuf {
         .and_then(|n| n.to_str())
         .unwrap_or("config");
 
-    let backup_path = path.with_file_name(format!("{file_name}.bak"));
-
-    backup_path
+    return path.with_file_name(format!("{file_name}.bak"));
 }
 
 pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {

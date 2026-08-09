@@ -1,11 +1,8 @@
 use crate::config::TapeManifest;
 use crate::APP_NAME;
 use anyhow::{bail, Context, Result};
-use std::collections::HashSet;
-use std::io::Write;
 use std::os::unix::fs::symlink;
-use std::{fs, path::PathBuf, process::Command};
-use walkdir::WalkDir;
+use std::{fs, path::{Path, PathBuf}, process::Command};
 use yansi::Paint;
 
 pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
@@ -88,18 +85,6 @@ pub fn locate_local_dir() -> Result<PathBuf> {
     Ok(config_dir)
 }
 
-fn get_relative_file_paths(dir: &std::path::Path) -> Result<HashSet<String>> {
-    let mut files = HashSet::new();
-    for entry in WalkDir::new(dir) {
-        let entry = entry?;
-        if entry.file_type().is_file() {
-            if let Ok(relative) = entry.path().strip_prefix(dir) {
-                files.insert(relative.display().to_string());
-            }
-        }
-    }
-    Ok(files)
-}
 
 pub fn get_source_path(name: &Option<String>, path: Option<PathBuf>) -> Result<PathBuf> {
     let source_path = match (name, path) {
@@ -112,7 +97,7 @@ pub fn get_source_path(name: &Option<String>, path: Option<PathBuf>) -> Result<P
     Ok(source_path)
 }
 
-pub fn get_available_backup_path(target_path: &PathBuf) -> PathBuf {
+pub fn get_available_backup_path(target_path: &Path) -> PathBuf {
     let file_name = target_path
         .file_name()
         .and_then(|n| n.to_str())
