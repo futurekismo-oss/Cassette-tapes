@@ -71,14 +71,6 @@ pub fn show_specific_tape(name: &str) -> Result<()> {
     }
 
     Ok(())
-
-    // for (tape, manifest_path) in load_all_tapes()? {
-    //     if tape.tape.name == name {
-    //         display_tape_properties(&tape, &manifest_path);
-    //         return Ok(());
-    //     }
-    // }
-    // bail!("Tape '{}' was not found", name);
 }
 
 pub fn list_all_known_tapes() -> Result<()> {
@@ -135,19 +127,6 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
             );
         }
     }
-
-    // if let Some(targets) = &tape.targets {
-    //     println!("\n{}", Paint::new("Targets").bold().fg(Color::Yellow));
-    //     for (target_name, target_path) in targets {
-    //         println!(
-    //             "  {} {}: {}",
-    //             Paint::new("•").fg(Color::Green),
-    //             Paint::new(target_name).fg(Color::Magenta),
-    //             Paint::new(target_path).fg(Color::White)
-    //         );
-    //     }
-    //     println!();
-    // }
 
     // --- hooks ---
     if let Some(hooks) = &tape.hooks {

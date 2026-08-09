@@ -1,7 +1,8 @@
 use crate::config::TapeManifest;
+use crate::run_command;
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
-use std::{fs, process::Command};
+use std::fs;
 use yansi::Paint;
 
 fn is_tape_symlink(path: &Path) -> bool {
@@ -86,16 +87,3 @@ pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {
     Ok(())
 }
 
-fn run_command(line: &str) -> Result<()> {
-    if line.trim().is_empty() {
-        return Ok(());
-    }
-
-    let status = Command::new("sh").arg("-c").arg(line).status()?;
-
-    if !status.success() {
-        println!("Command returned a non-exit code: {:?}", status.code());
-    }
-
-    Ok(())
-}

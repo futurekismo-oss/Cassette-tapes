@@ -1,8 +1,12 @@
 use crate::config::TapeManifest;
-use crate::APP_NAME;
+use crate::dependencies::check_dependencies;
+use crate::{run_command, APP_NAME};
 use anyhow::{bail, Context, Result};
 use std::os::unix::fs::symlink;
-use std::{fs, path::{Path, PathBuf}, process::Command};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use yansi::Paint;
 
 pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
@@ -28,6 +32,8 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
 
     let available_backup_path = get_available_backup_path(&user_config);
 
+    check_dependecies(&source_path)?;
+   
     if dry_run {
         // LATER: Will do later
         return Ok(());
@@ -47,8 +53,6 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
 
     symlink(&actual_path, &user_config).context("Failed to symlink")?;
 
-    
-    
     println!(
         "{} ~/{} to ~/{}",
         "Symlinked: ".bold().blue(),
@@ -62,7 +66,11 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
                 println!("{}", "Runnning insert hooks...".bold().bright_red());
                 run_insert_hooks(&tape)?;
 
-                println!("{}{}", "Inserted: ".bold().green(), tape.tape.name.bold());
+                println!(
+                    "\n{}{}\n",
+                    "Inserted: ".bold().green(),
+                    tape.tape.name.bold()
+                );
             }
         }
     }
@@ -84,7 +92,6 @@ pub fn locate_local_dir() -> Result<PathBuf> {
 
     Ok(config_dir)
 }
-
 
 pub fn get_source_path(name: &Option<String>, path: Option<PathBuf>) -> Result<PathBuf> {
     let source_path = match (name, path) {
@@ -127,17 +134,14 @@ pub fn run_insert_hooks(tape: &TapeManifest) -> Result<()> {
 
     Ok(())
 }
-
-fn run_command(line: &str) -> Result<()> {
-    if line.trim().is_empty() {
-        return Ok(());
-    }
-
-    // LATER: find a way to modify status output
-    let status = Command::new("sh").arg("-c").arg(line).status()?;
-
-    if !status.success() {
-        println!("Command returned a non-exit code: {:?}", status.code());
+fn check_dependecies(source_path: &Path) -> Result<()> {
+    if source_path.is_dir() {
+        let manifest_path = source_path.join("tape.toml");
+        if manifest_path.is_file() {
+            if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
+                check_dependencies(&tape)?;
+            }
+        }
     }
 
     Ok(())

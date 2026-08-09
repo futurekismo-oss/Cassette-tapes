@@ -4,7 +4,7 @@ mod dependencies;
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use std::os::unix::fs::symlink;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, process::Command};
 use yansi::Paint;
 
 use crate::commands::insert::locate_local_dir;
@@ -86,6 +86,11 @@ fn main() -> Result<()> {
                 commands::insert::insert(name, path, dry_run)?;
             } else {
                 commands::eject::eject()?;
+                println!(
+                    "\n{}\n",
+                    Paint::new("────────────────────────────────────────────────────────────")
+                        .dim()
+                );
                 commands::insert::insert(name, path, dry_run)?;
             }
         }
@@ -112,6 +117,21 @@ fn create_tapes_symlink() -> Result<()> {
     let actual_path: PathBuf = locate_local_dir()?;
 
     symlink(&actual_path, &tapes_path).context("Failed to symlink")?;
+
+    Ok(())
+}
+
+pub fn run_command(line: &str) -> Result<()> {
+    if line.trim().is_empty() {
+        return Ok(());
+    }
+
+    // LATER: find a way to modify status output
+    let status = Command::new("sh").arg("-c").arg(line).status()?;
+
+    if !status.success() {
+        println!("Command returned a non-exit code: {:?}", status.code());
+    }
 
     Ok(())
 }
