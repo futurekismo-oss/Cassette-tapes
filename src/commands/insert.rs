@@ -1,6 +1,6 @@
 use crate::config::TapeManifest;
-use crate::quit;
 use crate::dependencies::check_dependencies;
+use crate::{STATE_FILE, quit};
 use crate::{run_command, APP_NAME};
 use anyhow::{bail, Context, Result};
 use std::os::unix::fs::symlink;
@@ -34,7 +34,7 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
     let available_backup_path = get_available_backup_path(&user_config);
 
     check_dependecies(&source_path)?;
-   
+
     if dry_run {
         // LATER: Will do later
         return Ok(());
@@ -72,6 +72,8 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
                     "Inserted: ".bold().green(),
                     tape.tape.name.bold()
                 );
+
+                store_current_tape(&tape.tape.name.to_string())?;
             }
         }
     }
@@ -114,7 +116,10 @@ pub fn get_available_backup_path(target_path: &Path) -> PathBuf {
     let backup_path = target_path.with_file_name(format!("{file_name}.bak"));
 
     while std::fs::symlink_metadata(&backup_path).is_ok() {
-        quit(&format!("{}", "Backup of config already found".bold().red()))
+        quit(&format!(
+            "{}",
+            "Backup of config already found".bold().red()
+        ))
     }
 
     backup_path
@@ -143,5 +148,19 @@ fn check_dependecies(source_path: &Path) -> Result<()> {
         }
     }
 
+    Ok(())
+}
+
+pub fn store_current_tape(current_rice_name: &str) -> Result<()> {
+    let path = locate_local_dir()?.join(STATE_FILE);
+
+    let current_rice = format!("CURRENT-RICE: {}", current_rice_name);
+    
+    fs::write(&path, current_rice).context("Failed to write to file")?;
+
+    // let mut perms = fs::metadata(&path)?.permissions();
+    // perms.set_readonly(true);
+    // set_permissions(path, perms)?;
+    
     Ok(())
 }

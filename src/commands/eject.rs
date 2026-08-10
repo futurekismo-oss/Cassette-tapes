@@ -1,5 +1,6 @@
+use crate::commands::insert::locate_local_dir;
 use crate::config::TapeManifest;
-use crate::run_command;
+use crate::{STATE_FILE, run_command};
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
 use std::fs;
@@ -43,6 +44,8 @@ pub fn eject() -> Result<()> {
                     println!("{}", "Runnning eject hooks...".bold().bright_red());
 
                     run_eject_hooks(tape)?;
+
+                    delete_state_file()?;
                 }
             }
         }
@@ -87,3 +90,10 @@ pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {
     Ok(())
 }
 
+fn delete_state_file() -> Result<()> {
+    let path = locate_local_dir()?.join(STATE_FILE);
+
+    fs::remove_file(path)?;
+    
+    Ok(())
+}

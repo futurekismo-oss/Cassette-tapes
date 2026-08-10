@@ -52,9 +52,13 @@ enum Commands {
 
     /// Eject the current tape if you used any
     Eject,
+
+    /// Displays the currently inserted rice
+    Current,
 }
 
 pub const APP_NAME: &str = "tapes";
+pub const STATE_FILE: &str = "current-tape";
 
 fn main() -> Result<()> {
     create_tapes_symlink()?;
@@ -96,6 +100,8 @@ fn main() -> Result<()> {
         }
 
         Commands::Eject => commands::eject::eject()?,
+
+        Commands::Current => commands::current::display_currently_inserted_tape()?
     }
 
     Ok(())
