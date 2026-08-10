@@ -152,7 +152,7 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
                 );
             }
         } else {
-            println!("  {}", Paint::new("No insert hooks found\n").fg(Color::Red));
+            println!("  {}", Paint::new("No eject hooks found\n").fg(Color::Red));
         }
     }
 
