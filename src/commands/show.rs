@@ -7,7 +7,7 @@ use std::{
 };
 use yansi::{Color, Paint};
 
-pub fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
+pub fn load_all_tapes() -> Result<Vec<(TapeManifest, PathBuf)>> {
     let config_dir = dirs::data_local_dir()
         .context("Could not locate local directory")?
         .join(APP_NAME);
@@ -23,7 +23,7 @@ pub fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
             let manifest_path = path.join("tape.toml");
             if manifest_path.is_file() {
                 if let Ok(tape) = TapeManifest::load_from_file(&manifest_path) {
-                    tapes.push((tape, manifest_path));
+                    tapes.push((tape, path));
                 }
             }
         }
@@ -33,7 +33,7 @@ pub fn load_all_tapes() -> Result<Vec<(TapeManifest, std::path::PathBuf)>> {
 
 pub fn show_all_tapes() -> Result<()> {
     for (tape, manifest_path) in load_all_tapes()? {
-        display_tape_properties(&tape, &manifest_path);
+        display_tape_properties(&tape, &manifest_path.parent().unwrap());
     }
     Ok(())
 }
@@ -154,18 +154,26 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         } else {
             println!("  {}", Paint::new("No eject hooks found\n").fg(Color::Red));
         }
+    }
 
+    // --- Files ---
+    println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
+    for entry in walkdir::WalkDir::new(tape_path)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .flatten()
+    {
+        if entry.file_type().is_file() {
+            continue;
+        }
 
-        // --- Files ---
-        println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
-        for entry in walkdir::WalkDir::new(tape_path).min_depth(1).max_depth(2).into_iter().flatten() {
-            if !entry.file_type().is_file() {
-                continue;
-            }
-
-            if let Ok(file) = entry.path().strip_prefix(tape_path) {
-                println!("  {} {}", Paint::new("•").fg(Color::Green), Paint::new(file.display()).fg(Color::White));
-            }
+        if let Ok(file) = entry.path().strip_prefix(tape_path) {
+            println!(
+                "  {} {}",
+                Paint::new("•").fg(Color::Green),
+                Paint::new(file.display()).fg(Color::White)
+            );
         }
     }
 
