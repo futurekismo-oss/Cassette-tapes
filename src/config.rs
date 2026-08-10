@@ -7,6 +7,7 @@ use std::fs;
 pub struct TapeManifest {
     pub tape: TapeInfo,
     pub hooks: Option<Hooks>,
+    pub targets: Option<Vec<String>>
 }
 
 #[derive(Debug, Deserialize)]

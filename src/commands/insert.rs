@@ -1,6 +1,6 @@
 use crate::config::TapeManifest;
 use crate::dependencies::check_dependencies;
-use crate::{STATE_FILE, quit};
+use crate::{quit, STATE_FILE};
 use crate::{run_command, APP_NAME};
 use anyhow::{bail, Context, Result};
 use std::os::unix::fs::symlink;
@@ -28,10 +28,9 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
 
     let user_config: PathBuf =
         dirs::config_dir().context("Could not locate user config direcotry")?;
-
     let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
 
-    let available_backup_path = get_available_backup_path(&user_config);
+    // let available_backup_path = get_available_backup_path(&user_config);
 
     check_dependecies(&source_path)?;
 
@@ -40,31 +39,59 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
         return Ok(());
     }
 
-    fs::rename(&user_config, &available_backup_path)?;
+    let targets = resolve_targets(&actual_path)?;
 
-    println!(
-        "{} ~/{} to ~/{}",
-        "Renamed: ".bold().blue(),
-        &user_config.strip_prefix(&home_dir)?.display().magenta(),
-        &available_backup_path
-            .strip_prefix(&home_dir)?
-            .display()
-            .magenta()
-    );
+    for target in &targets {
+        let tape_target_source = actual_path.join(".config").join(target);
+        if !tape_target_source.exists() {
+            let direct_source = actual_path.join(target);
+            if !direct_source.exists() {
+                continue;
+            }
+        }
 
-    symlink(&actual_path, &user_config).context("Failed to symlink")?;
+        let actual_source = actual_path.join(target);
 
-    println!(
-        "{} ~/{} to ~/{}",
-        "Symlinked: ".bold().blue(),
-        &actual_path.strip_prefix(&home_dir)?.display().magenta(),
-        &user_config.strip_prefix(&home_dir)?.display().magenta()
-    );
+        let user_target_dest = user_config.join(target);
+
+        if user_target_dest.exists() {
+            let backup_path = get_available_backup_path_local(&user_target_dest);
+
+            fs::rename(&user_target_dest, &backup_path)?;
+
+            println!(
+                "{} ~/{} to ~/{}",
+                "Backed up: ".bold().blue(),
+                user_target_dest
+                    .strip_prefix(&home_dir)?
+                    .display()
+                    .magenta(),
+                backup_path.strip_prefix(&home_dir)?.display().magenta()
+            );
+        }
+
+        if let Some(parent) = user_target_dest.parent() {
+            fs::create_dir_all(parent)?;
+        }
+
+        symlink(&actual_source, &user_target_dest).context("Failed to symlink target")?;
+
+        println!(
+            "{} ~/{} -> ~/{}",
+            "Symlinked: ".bold().blue(),
+            actual_source.strip_prefix(&home_dir)?.display().magenta(),
+            user_target_dest
+                .strip_prefix(&home_dir)?
+                .display()
+                .magenta()
+        );
+    }
+
     if source_path.is_dir() {
         let manifest_path = source_path.join("tape.toml");
         if manifest_path.is_file() {
             if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
-                println!("{}", "Runnning insert hooks...".bold().bright_red());
+                println!("{}", "Running insert hooks...".bold().bright_red());
                 run_insert_hooks(&tape)?;
 
                 println!(
@@ -73,17 +100,10 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
                     tape.tape.name.bold()
                 );
 
-                store_current_tape(&tape.tape.name.to_string())?;
+                store_current_tape(&tape.tape.name.to_string(), &identifier)?;
             }
         }
     }
-
-    println!(
-        "{}",
-        "It is recommended to relogin or reboot after a tape is inserted"
-            .black()
-            .on_bright_yellow()
-    );
 
     Ok(())
 }
@@ -107,13 +127,13 @@ pub fn get_source_path(name: &Option<String>, path: Option<PathBuf>) -> Result<P
     Ok(source_path)
 }
 
-pub fn get_available_backup_path(target_path: &Path) -> PathBuf {
+pub fn get_available_backup_path_local(target_path: &Path) -> PathBuf {
     let file_name = target_path
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("config");
 
-    let backup_path = target_path.with_file_name(format!("{file_name}.bak"));
+    let backup_path = target_path.with_file_name(format!(".{file_name}.bak"));
 
     while std::fs::symlink_metadata(&backup_path).is_ok() {
         quit(&format!(
@@ -151,16 +171,45 @@ fn check_dependecies(source_path: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn store_current_tape(current_rice_name: &str) -> Result<()> {
+pub fn store_current_tape(current_rice_name: &str, filename: &str) -> Result<()> {
     let path = locate_local_dir()?.join(STATE_FILE);
 
-    let current_rice = format!("CURRENT-RICE: {}", current_rice_name);
-    
-    fs::write(&path, current_rice).context("Failed to write to file")?;
+    let current_rice = format!("CURRENT-RICE: {}\nFILENAME: {}", current_rice_name, filename);
 
-    // let mut perms = fs::metadata(&path)?.permissions();
-    // perms.set_readonly(true);
-    // set_permissions(path, perms)?;
-    
+    fs::write(&path, current_rice).context("Failed to write to file")?;
+   
     Ok(())
+}
+
+pub fn resolve_targets(tape_path: &Path) -> Result<Vec<PathBuf>> {
+    // # Might remove this
+    let manifest_path = tape_path.join("tape.toml");
+
+    if manifest_path.is_file() {
+        if let Ok(manifest) = TapeManifest::load_from_file(&manifest_path) {
+            if let Some(targets) = manifest.targets {
+                return Ok(targets.into_iter().map(PathBuf::from).collect());
+            }
+        }
+    }
+
+    // #
+
+    let config_dir = tape_path.join(".config");
+    let scan_dir = if config_dir.is_dir() {
+        config_dir
+    } else {
+        tape_path.to_path_buf()
+    };
+
+    let mut detected = Vec::new();
+    for entry in fs::read_dir(scan_dir)? {
+        let entry = entry?;
+        let name = entry.file_name();
+        if name != "tape.toml" && name != ".git" {
+            detected.push(PathBuf::from(name))
+        }
+    }
+
+    Ok(detected)
 }

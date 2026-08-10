@@ -1,68 +1,74 @@
-use crate::commands::insert::locate_local_dir;
+use crate::commands::insert::{locate_local_dir, resolve_targets};
 use crate::config::TapeManifest;
-use crate::{STATE_FILE, run_command};
+use crate::{run_command, STATE_FILE};
 use anyhow::{bail, Context, Result};
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 use yansi::Paint;
-
-fn is_tape_symlink(path: &Path) -> bool {
-    if !path.is_symlink() {
-        return false;
-    }
-
-    if let Ok(target) = fs::read_link(path) {
-        target.to_string_lossy().contains(".local/share/tapes")
-    } else {
-        false
-    }
-}
 
 pub fn eject() -> Result<()> {
     let user_config = dirs::config_dir().context("Cannot find user config")?;
+    let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
 
-    if !is_tape_symlink(&user_config) {
-        bail!(
-            "~/.config is not a {} symlink. Nothing to eject",
-            "tape".bold().italic().invert(),
-        )
+    let state_path = locate_local_dir()?.join(STATE_FILE);
+    if !state_path.exists() {
+        bail!("No active tape nothing to eject");
     }
 
-    let backup = get_lastest_backup(&user_config);
+    let state_content =
+        fs::read_to_string(&state_path).context("Failed to read active tape state file")?;
 
-    if backup.exists() {
-        if user_config.is_dir() {
-            let manifest_path = user_config.join("tape.toml");
-            if manifest_path.is_file() {
-                if let Ok(tape) = TapeManifest::load_from_file(&manifest_path) {
-                    fs::remove_file(&user_config)?;
+    let tape_name = state_content
+        .lines()
+        .find_map(|line| line.strip_prefix("FILENAME: "))
+        .context("State file is corrupted or is missing CURRENT-RICE entry")?
+        .trim();
 
-                    fs::rename(&backup, &user_config)?;
+    let tape_dir = locate_local_dir()?.join(tape_name);
+    let manifest_path = tape_dir.join("tape.toml");
 
-                    println!("{} {}", "Ejected:".bold().green(), tape.tape.name.bold());
+    let tape_manifest = if manifest_path.is_file() {
+        TapeManifest::load_from_file(&manifest_path).ok()
+    } else {
+        None
+    };
 
-                    println!("{}", "Runnning eject hooks...".bold().bright_red());
+    let targets = resolve_targets(&tape_dir)?;
 
-                    run_eject_hooks(tape)?;
+    for target in targets {
+        let user_target = user_config.join(&target);
 
-                    delete_state_file()?;
-                }
-            }
+        if user_target.is_symlink() {
+            fs::remove_file(&user_target)?;
+            println!(
+                "{} ~/{}",
+                "Unlinked target:".bold().yellow(),
+                user_target.strip_prefix(&home_dir)?.display().magenta()
+            );
         }
 
-        let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
-
-        println!(
-            "{} ~/{} from ~/{}",
-            "Restored: ".bold().blue(),
-            user_config.strip_prefix(&home_dir)?.display().magenta(),
-            backup.strip_prefix(&home_dir)?.display().magenta()
-        );
-
-        println!("{}", "Restored user original config".bold().green())
-    } else {
-        println!("No backup found. ~/.config kept.");
+        let backup = get_lastest_backup(&user_target);
+        if backup.exists() {
+            fs::rename(&backup, &user_target)?;
+            println!(
+                "{} ~/{} from ~/{}",
+                "Restored: ".bold().blue(),
+                user_target.strip_prefix(&home_dir)?.display().magenta(),
+                backup.strip_prefix(&home_dir)?.display().magenta()
+            );
+        }
     }
+
+    if let Some(tape) = tape_manifest {
+        println!("{}", "Running eject hooks...".bold().bright_red());
+        run_eject_hooks(tape)?;
+        println!("{} {}", "Ejected:".bold().green(), tape_name.bold());
+    }
+
+    delete_state_file()?;
+
+    println!("{}", "Restored user original target configs".bold().green());
+    
 
     Ok(())
 }
@@ -73,7 +79,7 @@ fn get_lastest_backup(path: &Path) -> PathBuf {
         .and_then(|n| n.to_str())
         .unwrap_or("config");
 
-    return path.with_file_name(format!("{file_name}.bak"));
+    return path.with_file_name(format!(".{file_name}.bak"));
 }
 
 pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {
@@ -94,6 +100,6 @@ fn delete_state_file() -> Result<()> {
     let path = locate_local_dir()?.join(STATE_FILE);
 
     fs::remove_file(path)?;
-    
+
     Ok(())
 }
