@@ -3,7 +3,7 @@
 [![Rust](https://img.shields.io/badge/rust-2024_Edition-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Tapes** is an atomic dotfile switcher for ricing. It allows you to instantly switch between complete configuration setups (rices) with a single command, with automatic backups and rollback capability.
+**Tapes** isan atomic dotfile switcher for ricing. It allows you to instantly switch between complete configuration setups (rices) with a single command, with automatic backups and rollback capability.
 
 ## Concept
 
