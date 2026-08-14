@@ -155,7 +155,7 @@ tape insert my-sway-rice --dry-run
 ```
 ~/.local/share/tapes/
 ├── my-hypr-rice/
-│   ├── tape.toml          # Tape manifest (optional)
+│   ├── tape.toml          # Tape manifest
 │   └── .config/
 │       ├── hypr/
 │       │   └── hyprland.conf
