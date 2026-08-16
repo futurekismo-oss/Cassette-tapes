@@ -11,7 +11,13 @@ pub fn display_currently_inserted_tape() -> Result<()> {
 
         let title_len = "CURRENT-RICE: ".len();
         let strings = current_tape.split_at(title_len);
+
+
         let (title, name) = strings;
+
+        let name: Vec<_> = name.split("\n").collect();
+
+        let name = name[0];
 
         println!("{}{}", title.bold().green(), name)
     } else {
