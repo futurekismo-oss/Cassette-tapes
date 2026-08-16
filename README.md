@@ -3,20 +3,23 @@
 [![Rust](https://img.shields.io/badge/rust-2024_Edition-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**Tapes** isan atomic dotfile switcher for ricing. It allows you to instantly switch between complete configuration setups (rices) with a single command, with automatic backups and rollback capability.
+**Tapes** is an atomic dotfile switcher for ricing. It allows you to instantly switch between complete configuration setups (rices) with a single command, with automatic backups and rollback capability.
 
 ## Concept
 
 A **tape** is a self-contained rice directory containing:
 - A `.config/` folder with your configuration files
-- An optional `tape.toml` manifest defining metadata, dependencies, and lifecycle hooks
+- A `tape.toml` manifest defining metadata, dependencies, and lifecycle hooks
 
-When you **insert** a tape, your `~/.config` directory is atomically replaced with a symlink to the tape's `.config`. Your original configuration is automatically backed up. When you **eject**, your original config is restored just as quickly.
+When you **insert** a tape, the folders in your `~/.config` directory that clash with the tapes config are backed up ( renamed to .bak ) then all the folders in tapes config are symlinked individually to your `~/.config`
+
+When you **eject**, the symlinks are removed and the .bak are renamed back to normal, returning the state of your previous config
+
 
 ## Features
 
 - **Atomic switching**: Your config is never in a half-state during insert/eject
-- **Automatic backups**: Original `~/.config` is always preserved
+- **Automatic backups**: Original `~/.config` folders is always preserved
 - **Lifecycle hooks**: Run commands before/after insert and eject
 - **Dependency checking**: Verify required binaries exist before switching
 - **Clean uninstalls**: Generated files in tapes are cleaned up on eject
@@ -42,7 +45,7 @@ If you have Nix/flakes configured:
 
 ```bash
 # Clone and enter development shell
- git clone https://github.com/futurekismo/cassette-rices
+git clone https://github.com/futurekismo/cassette-rices
 cd cassette-rices
 
 # Build with nix
@@ -87,10 +90,7 @@ eject = [
 ### 3. Try It Out
 
 ```bash
-# Test the tape without replacing files (dry run)
-tape insert --path ~/my-hypr-rice --dry-run
-
-# Actually insert the tape
+# Insert the tape
 tape insert --path ~/my-hypr-rice
 
 # Don't like it? Revert instantly
@@ -120,11 +120,12 @@ tape insert my-hypr-rice
 | `tape insert .` | Insert a tape from the current directory |
 | `tape insert --path <path>` | Insert a tape from an arbitrary path |
 | `tape insert --reinsert` | Eject current tape first, then insert (force replace) |
-| `tape insert --dry-run` | Validate and show what would happen without making changes |
+<!-- | `tape insert --dry-run` | Validate and show what would happen without making changes | -->
 | `tape eject` | Remove current tape and restore original config |
 | `tape show` | Display details of all installed tapes |
 | `tape show <name>` | Display details of a specific tape |
 | `tape show --list` | List all known tapes in a compact format |
+| `tape current` | Displays the currently inserted tape if any |
 
 ### Examples
 
@@ -146,8 +147,8 @@ tape insert my-hypr-rice
 # Force reinsert (useful if you've made changes to the tape)
 tape insert my-hypr-rice --reinsert
 
-# Test without replacing files
-tape insert my-sway-rice --dry-run
+# Display the currently inserted tape
+tape current
 ```
 
 ## Directory Structure
@@ -176,9 +177,9 @@ The manifest file defines tape metadata and behavior:
 
 ```toml
 [tape]
-name = "my-rice"
-version = "0.1.0"
-desc = "My awesome configuration setup"
+name = "my-rice" # Required
+version = "0.1.0" # Required
+desc = "My awesome configuration setup" # Required
 
 [dependencies]
 # List of required binaries - checked before insert
@@ -204,24 +205,23 @@ eject = [
 
 1. Validate the tape exists and has a valid `tape.toml` (if present)
 2. Check dependencies (if any binaries are missing, abort)
-3. Rename `~/.config` → `~/.config.bak` (creates numbered backups if needed)
-4. Create symlink from tape directory → `~/.config`
+3. Rename conflicting configs in `~/.config/` to config.bak
+4. Symlink each config file/dir in the tape directory → `~/.config`
 5. Track original tape file list for cleanup
 6. Run insert hooks
+7. Store the state data in `~/.local/share/tapes/current-tape`
 
 ### Eject Flow
 
-1. Verify `~/.config` is a tape symlink
-2. Clean up any generated files in the tape directory
-3. Remove `~/.config` symlink
-4. Rename `~/.config.bak` → `~/.config` (restore latest backup)
+1. Check if a tape is inserted via `~/.local/share/tapes/current-tape`
+2. Remove symlinks tapes symlink in `~/.config`
+3. Unback up previous configs in `~/.config`
 5. Run eject hooks
 
 ## Safety Features
 
 - **Atomic operations**: Insert and eject are atomic — your config is never partially replaced
-- **Automatic backups**: Original `~/.config` is always backed up before replacement
-- **Numbered backups**: Multiple backups are supported (`~/.config.bak`, `~/.config.bak.1`, etc.)
+- **Automatic backups**: Original `~/.config` folders are always backed up before replacement
 - **Dependency validation**: Missing binaries are caught before switching
 - **No overwrites**: Uses backups, never clobbers existing files directly
 - **Clean cleanup**: Generated files in tapes are automatically removed on eject
@@ -268,8 +268,7 @@ cargo clippy
 Tapes uses the following conventions:
 
 - **Tape library**: `~/.local/share/tapes/` (can be overridden with `--path`)
-- **Config directory**: `~/.config` (standard XDG location)
-- **Backup directory**: `~/.config.bak` (with numbered suffixes for multiple backups)
+- **State File**: `~/.local/share/tapes/current-tape` ( stores the currently inserted tape ) # Do not touch this file
 - **Manifest file**: `tape.toml` (in each tape directory)
 
 ## Dependencies
@@ -288,13 +287,13 @@ Tapes uses the following conventions:
 
 See [DESIGN.md](DESIGN.md) for the current design and [VISION.md](VISION.md) for future ideas including:
 
-- Composable tapes (multiple active simultaneously)
-- Per-file symlinking instead of directory replacement
-- State tracking for clean uninstalls
-- Lock files for reproducible tape states
-- Remote tape support (`tape run <url>`)
-- Conflict detection between multiple tapes
-- Rollback capability for individual files
+[ ] Composable tapes (multiple active simultaneously)
+[ ] State tracking for clean uninstalls
+[ ] Lock files for reproducible tape states
+[ ] Remote tape support (`tape run <url>`)
+[ ] Conflict detection between multiple tapes
+[ ] Rollback capability for individual files
+[ ] Tui
 
 ## Contributing
 
