@@ -10,7 +10,7 @@ use std::{
 };
 use yansi::Paint;
 
-pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Result<()> {
+pub fn insert(name: Option<String>, path: Option<PathBuf>) -> Result<()> {
     let source_path = get_source_path(&name, path)?;
 
     let local_dir: PathBuf = dirs::data_local_dir()
@@ -33,10 +33,6 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>, dry_run: bool) -> Res
 
     check_dependecies(&source_path)?;
 
-    if dry_run {
-        // LATER: Will do later
-        return Ok(());
-    }
 
     let targets = resolve_targets(&actual_path)?;
 
@@ -182,7 +178,7 @@ pub fn store_current_tape(current_rice_name: &str, filename: &str) -> Result<()>
          "#, current_rice);
 
     fs::write(&path, current_rice).context("Failed to write to file")?;
-   
+
     Ok(())
 }
 

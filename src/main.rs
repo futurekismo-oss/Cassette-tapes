@@ -38,10 +38,6 @@ enum Commands {
         #[arg(short, long)]
         path: Option<PathBuf>,
 
-        /// Run but don't replace any files
-        #[arg(long)]
-        dry_run: bool,
-
         /// First eject the current tape if any before inserting
         #[arg(short, long)]
         reinsert: bool,
@@ -83,11 +79,10 @@ fn main() -> Result<()> {
         Commands::Insert {
             name,
             path,
-            dry_run,
             reinsert,
         } => {
             if !reinsert {
-                commands::insert::insert(name, path, dry_run)?;
+                commands::insert::insert(name, path)?;
             } else {
                 commands::eject::eject()?;
                 println!(
@@ -95,7 +90,7 @@ fn main() -> Result<()> {
                     Paint::new("────────────────────────────────────────────────────────────")
                         .dim()
                 );
-                commands::insert::insert(name, path, dry_run)?;
+                commands::insert::insert(name, path)?;
             }
         }
 
