@@ -1,5 +1,5 @@
 use crate::config::TapeManifest;
-use crate::APP_NAME;
+use crate::{debug, APP_NAME};
 use anyhow::{bail, Context, Result};
 use std::{
     fs,
@@ -64,7 +64,6 @@ pub fn show_specific_tape(name: &str) -> Result<()> {
         if manifest_path.is_file() {
             if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
                 display_tape_properties(&tape, &specificed_tape_path);
-                // return Ok(());
             }
         }
     }
@@ -74,18 +73,31 @@ pub fn show_specific_tape(name: &str) -> Result<()> {
 
 pub fn list_all_known_tapes() -> Result<()> {
     for (tape, _) in load_all_tapes()? {
-        let version = "v".to_string() + &tape.tape.version;
-        println!(
-            " - {} ({}): {}",
-            tape.tape.name.bold().blue(),
-            version.magenta(),
-            tape.tape.desc.italic()
-        );
+        if debug::is_debug() {
+            let version = tape.tape.version.clone();
+            println!(
+                "tape={} version={} description={}",
+                tape.tape.name, version, tape.tape.desc
+            );
+        } else {
+            let version = "v".to_string() + &tape.tape.version;
+            println!(
+                " - {} ({}): {}",
+                tape.tape.name.bold().blue(),
+                version.magenta(),
+                tape.tape.desc.italic()
+            );
+        }
     }
     Ok(())
 }
 
 pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
+    if debug::is_debug() {
+        display_tape_properties_debug(tape, tape_path);
+        return;
+    }
+
     let display_path = dirs::home_dir()
         .and_then(|home| tape_path.strip_prefix(home).ok())
         .unwrap_or(tape_path);
@@ -95,7 +107,6 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         Paint::new("────────────────────────────────────────────────────────────").dim()
     );
 
-    // --- Header ---
     println!(
         "{} {} ({}) from {}",
         Paint::new("Loaded tape:").bold().fg(Color::Yellow),
@@ -104,14 +115,12 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         Paint::new(display_path.display()).dim()
     );
 
-    // --- Description ---
     println!(
         "{} {}",
         Paint::new("Description:").bold().fg(Color::Yellow),
         Paint::new(&tape.tape.desc).fg(Color::White)
     );
 
-    // --- Dependencies ---
     if let Some(deps) = &tape.tape.dependencies {
         println!("\n{}", Paint::new("Dependencies").bold().fg(Color::Yellow));
         for dep in deps {
@@ -123,11 +132,9 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         }
     }
 
-    // --- hooks ---
     if let Some(hooks) = &tape.hooks {
         println!("\n{}", Paint::new("Hooks").bold().fg(Color::Magenta));
 
-        // --- Insert Hooks ---
         if !hooks.insert.is_empty() {
             println!("  {}", Paint::new("insert:").fg(Color::Green));
             for hook in &hooks.insert {
@@ -141,7 +148,6 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
             println!("  {}", Paint::new("No insert hooks found").fg(Color::Red));
         }
 
-        // --- Eject Hooks ---
         if !hooks.eject.is_empty() {
             println!("  {}", Paint::new("eject:").fg(Color::Red));
             for hook in &hooks.eject {
@@ -156,7 +162,6 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         }
     }
 
-    // --- Files ---
     println!("\n{}", Paint::new("Files").bold().fg(Color::Yellow));
     for entry in walkdir::WalkDir::new(tape_path)
         .min_depth(1)
@@ -181,4 +186,45 @@ pub fn display_tape_properties(tape: &TapeManifest, tape_path: &Path) {
         "\n{}\n",
         Paint::new("────────────────────────────────────────────────────────────").dim()
     );
+}
+
+fn display_tape_properties_debug(tape: &TapeManifest, tape_path: &Path) {
+    let display_path = dirs::home_dir()
+        .and_then(|home| tape_path.strip_prefix(home).ok())
+        .unwrap_or(tape_path);
+
+    println!("tape={}", tape.tape.name);
+    println!("version={}", tape.tape.version);
+    println!("description={}", tape.tape.desc);
+    println!("path={}", display_path.display());
+
+    if let Some(deps) = &tape.tape.dependencies {
+        for dep in deps {
+            debug::dependency(dep);
+        }
+    }
+
+    if let Some(hooks) = &tape.hooks {
+        for hook in &hooks.insert {
+            println!("hook=insert command={}", hook);
+        }
+        for hook in &hooks.eject {
+            println!("hook=eject command={}", hook);
+        }
+    }
+
+    for entry in walkdir::WalkDir::new(tape_path)
+        .min_depth(1)
+        .max_depth(1)
+        .into_iter()
+        .flatten()
+    {
+        if entry.file_type().is_file() {
+            continue;
+        }
+
+        if let Ok(file) = entry.path().strip_prefix(tape_path) {
+            debug::file_entry(&file.display().to_string());
+        }
+    }
 }

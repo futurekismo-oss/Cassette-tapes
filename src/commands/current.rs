@@ -1,4 +1,4 @@
-use crate::{commands::insert::locate_local_dir, STATE_FILE};
+use crate::{commands::insert::locate_local_dir, debug, STATE_FILE};
 use anyhow::Result;
 use std::fs;
 use yansi::Paint;
@@ -12,14 +12,22 @@ pub fn display_currently_inserted_tape() -> Result<()> {
         let title_len = "CURRENT-RICE: ".len();
         let strings = current_tape.split_at(title_len);
 
-
         let (title, name) = strings;
         let name: Vec<_> = name.split("\n").collect();
         let name = name[0];
 
-        println!("{}{}", title.bold().green(), name)
+        if debug::is_debug() {
+            debug::info("status", "ok");
+            debug::info("tape", name);
+        } else {
+            println!("{}{}", title.bold().green(), name);
+        }
     } else {
-        println!("{}", "No tapes currently inserted".bold().red())
+        if debug::is_debug() {
+            debug::info("status", "empty");
+        } else {
+            println!("{}", "No tapes currently inserted".bold().red());
+        }
     }
 
     Ok(())

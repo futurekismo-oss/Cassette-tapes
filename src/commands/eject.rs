@@ -1,6 +1,6 @@
 use crate::commands::insert::{locate_local_dir, resolve_targets};
 use crate::config::TapeManifest;
-use crate::{run_command, STATE_FILE};
+use crate::{debug, run_command, STATE_FILE};
 use anyhow::{bail, Context, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -40,35 +40,62 @@ pub fn eject() -> Result<()> {
 
         if user_target.is_symlink() {
             fs::remove_file(&user_target)?;
-            println!(
-                "{} ~/{}",
-                "Unlinked target:".bold().yellow(),
-                user_target.strip_prefix(&home_dir)?.display().magenta()
-            );
+            if debug::is_debug() {
+                debug::status_ok_kv(
+                    "unlink",
+                    "target",
+                    &user_target.strip_prefix(&home_dir)?.display().to_string(),
+                );
+            } else {
+                println!(
+                    "{} ~/{}",
+                    "Unlinked target:".bold().yellow(),
+                    user_target.strip_prefix(&home_dir)?.display().magenta()
+                );
+            }
         }
 
         let backup = get_lastest_backup(&user_target);
         if backup.exists() {
             fs::rename(&backup, &user_target)?;
-            println!(
-                "{} ~/{} from ~/{}",
-                "Restored: ".bold().blue(),
-                user_target.strip_prefix(&home_dir)?.display().magenta(),
-                backup.strip_prefix(&home_dir)?.display().magenta()
-            );
+            if debug::is_debug() {
+                debug::status_ok_fields(
+                    "restore",
+                    &[
+                        ("source", &backup.strip_prefix(&home_dir)?.display().to_string()),
+                        ("dest", &user_target.strip_prefix(&home_dir)?.display().to_string()),
+                    ],
+                );
+            } else {
+                println!(
+                    "{} ~/{} from ~/{}",
+                    "Restored: ".bold().blue(),
+                    user_target.strip_prefix(&home_dir)?.display().magenta(),
+                    backup.strip_prefix(&home_dir)?.display().magenta()
+                );
+            }
         }
     }
 
     if let Some(tape) = tape_manifest {
-        println!("{}", "Running eject hooks...".bold().bright_red());
+        if !debug::is_debug() {
+            println!("{}", "Running eject hooks...".bold().bright_red());
+        }
         run_eject_hooks(tape)?;
-        println!("{} {}", "Ejected:".bold().green(), tape_name.bold());
+        if debug::is_debug() {
+            debug::status_ok_kv("eject", "tape", tape_name);
+        } else {
+            println!("{} {}", "Ejected:".bold().green(), tape_name.bold());
+        }
     }
 
     delete_state_file()?;
 
-    println!("{}", "Restored user original target configs".bold().green());
-    
+    if debug::is_debug() {
+        debug::status_ok("restore_configs");
+    } else {
+        println!("{}", "Restored user original target configs".bold().green());
+    }
 
     Ok(())
 }
@@ -86,7 +113,11 @@ pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {
     if let Some(hooks) = &tape.hooks {
         if !hooks.insert.is_empty() {
             for hook in &hooks.eject {
-                println!(" {} {}", Paint::new("•").red(), hook.red());
+                if debug::is_debug() {
+                    debug::hook(hook);
+                } else {
+                    println!(" {} {}", Paint::new("•").red(), hook.red());
+                }
 
                 run_command(hook)?;
             }

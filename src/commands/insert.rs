@@ -1,6 +1,6 @@
 use crate::config::TapeManifest;
 use crate::dependencies::check_dependencies;
-use crate::{quit, STATE_FILE};
+use crate::{debug, quit, STATE_FILE};
 use crate::{run_command, APP_NAME};
 use anyhow::{bail, Context, Result};
 use std::os::unix::fs::symlink;
@@ -30,9 +30,7 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>) -> Result<()> {
         dirs::config_dir().context("Could not locate user config direcotry")?;
     let home_dir: PathBuf = dirs::home_dir().context("Could not locate home directory")?;
 
-
     check_dependecies(&source_path)?;
-
 
     let targets = resolve_targets(&actual_path)?;
 
@@ -49,21 +47,30 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>) -> Result<()> {
 
         let user_target_dest = user_config.join(target);
 
-
         if user_target_dest.exists() {
             let backup_path = get_available_backup_path_local(&user_target_dest);
 
             fs::rename(&user_target_dest, &backup_path)?;
 
-            println!(
-                "{} ~/{} to ~/{}",
-                "Backed up: ".bold().blue(),
-                user_target_dest
-                    .strip_prefix(&home_dir)?
-                    .display()
-                    .magenta(),
-                backup_path.strip_prefix(&home_dir)?.display().magenta()
-            );
+            if debug::is_debug() {
+                debug::status_ok_fields(
+                    "backup",
+                    &[
+                        ("source", &user_target_dest.strip_prefix(&home_dir)?.display().to_string()),
+                        ("dest", &backup_path.strip_prefix(&home_dir)?.display().to_string()),
+                    ],
+                );
+            } else {
+                println!(
+                    "{} ~/{} to ~/{}",
+                    "Backed up: ".bold().blue(),
+                    user_target_dest
+                        .strip_prefix(&home_dir)?
+                        .display()
+                        .magenta(),
+                    backup_path.strip_prefix(&home_dir)?.display().magenta()
+                );
+            }
         }
 
         if let Some(parent) = user_target_dest.parent() {
@@ -72,29 +79,45 @@ pub fn insert(name: Option<String>, path: Option<PathBuf>) -> Result<()> {
 
         symlink(&actual_source, &user_target_dest).context("Failed to symlink target")?;
 
-        println!(
-            "{} ~/{} -> ~/{}",
-            "Symlinked: ".bold().blue(),
-            actual_source.strip_prefix(&home_dir)?.display().magenta(),
-            user_target_dest
-                .strip_prefix(&home_dir)?
-                .display()
-                .magenta()
-        );
+        if debug::is_debug() {
+            debug::status_ok_fields(
+                "symlink",
+                &[
+                    ("source", &actual_source.strip_prefix(&home_dir)?.display().to_string()),
+                    ("dest", &user_target_dest.strip_prefix(&home_dir)?.display().to_string()),
+                ],
+            );
+        } else {
+            println!(
+                "{} ~/{} -> ~/{}",
+                "Symlinked: ".bold().blue(),
+                actual_source.strip_prefix(&home_dir)?.display().magenta(),
+                user_target_dest
+                    .strip_prefix(&home_dir)?
+                    .display()
+                    .magenta()
+            );
+        }
     }
 
     if source_path.is_dir() {
         let manifest_path = source_path.join("tape.toml");
         if manifest_path.is_file() {
             if let Ok(tape) = TapeManifest::load_from_file(manifest_path) {
-                println!("{}", "Running insert hooks...".bold().bright_red());
+                if !debug::is_debug() {
+                    println!("{}", "Running insert hooks...".bold().bright_red());
+                }
                 run_insert_hooks(&tape)?;
 
-                println!(
-                    "\n{}{}\n",
-                    "Inserted: ".bold().green(),
-                    tape.tape.name.bold()
-                );
+                if debug::is_debug() {
+                    debug::status_ok_kv("insert", "tape", &tape.tape.name);
+                } else {
+                    println!(
+                        "\n{}{}\n",
+                        "Inserted: ".bold().green(),
+                        tape.tape.name.bold()
+                    );
+                }
 
                 store_current_tape(&tape.tape.name.to_string(), &identifier)?;
             }
@@ -145,7 +168,11 @@ pub fn run_insert_hooks(tape: &TapeManifest) -> Result<()> {
     if let Some(hooks) = &tape.hooks {
         if !hooks.insert.is_empty() {
             for hook in &hooks.insert {
-                println!(" {} {}", Paint::new("•").red(), hook.red());
+                if debug::is_debug() {
+                    debug::hook(hook);
+                } else {
+                    println!(" {} {}", Paint::new("•").red(), hook.red());
+                }
 
                 run_command(hook)?;
             }
@@ -197,7 +224,6 @@ pub fn resolve_targets(tape_path: &Path) -> Result<Vec<PathBuf>> {
         if name != "tape.toml" && name != ".git" && name != "README.md" {
             detected.push(PathBuf::from(name))
         }
-
     }
 
     Ok(detected)
