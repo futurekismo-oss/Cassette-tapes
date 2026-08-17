@@ -1,4 +1,5 @@
-# Tapes
+# Cassette Tapes
+***or tapes for short***
 
 [![Rust](https://img.shields.io/badge/rust-2024_Edition-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
