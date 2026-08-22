@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -e
-if [[ ! -d "/home/futurekismo/cassette-tapes" ]]; then
+if [[ ! -d "/home/futurekismo/Coding/cassette-tapes" ]]; then
   echo "Cannot find source directory; Did you move it?"
-  echo "(Looking for "/home/futurekismo/cassette-tapes")"
+  echo "(Looking for "/home/futurekismo/Coding/cassette-tapes")"
   echo 'Cannot force reload with this script - use "direnv reload" manually and then try again'
   exit 1
 fi
 
 # rebuild the cache forcefully
-_nix_direnv_force_reload=1 direnv exec "/home/futurekismo/cassette-tapes" true
+_nix_direnv_force_reload=1 direnv exec "/home/futurekismo/Coding/cassette-tapes" true
 
 # Update the mtime for .envrc.
 # This will cause direnv to reload again - but without re-building.
-touch "/home/futurekismo/cassette-tapes/.envrc"
+touch "/home/futurekismo/Coding/cassette-tapes/.envrc"
 
 # Also update the timestamp of whatever profile_rc we have.
 # This makes sure that we know we are up to date.
-touch -r "/home/futurekismo/cassette-tapes/.envrc" "/home/futurekismo/cassette-tapes/.direnv"/*.rc
+touch -r "/home/futurekismo/Coding/cassette-tapes/.envrc" "/home/futurekismo/Coding/cassette-tapes/.direnv"/*.rc
