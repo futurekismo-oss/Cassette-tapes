@@ -10,9 +10,10 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-<h1 align="center">Cassette Tapes</h1>
 
-  <img src="media/icon.svg" alt="Logo" width="200">
+<img src="media/icon.svg" alt="Logo" width="200">
+
+<h1 align="center">Cassette Tapes</h1>
 
   <p align="center">
     An atomic dotfile switcher for ricing.
