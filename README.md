@@ -3,7 +3,7 @@
 
 
 <!-- PROJECT SHIELDS -->
-[![Contributors][contributors-shield]][contributors-url]
+[![Stargazers][stars-shield]][stars-url]
 [![License][license-shield]][license-url]
 
 
@@ -343,8 +343,8 @@ Don't forget to give the project a star! Thanks again!
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/futurekismo-oss/cassette-rices.svg?style=for-the-badge
-[contributors-url]: https://github.com/futurekismo-oss/cassette-rices/graphs/contributors
+[stars-shield]: https://img.shields.io/github/stars/futurekismo/cassette-rices.svg?style=for-the-badge
+[stars-url]: https://github.com/futurekismo/cassette-rices/stargazers
 [license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge
 [license-url]: https://github.com/futurekismo-oss/cassette-rices/blob/master/LICENSE.txt
 [Rust]: https://img.shields.io/badge/Rust-2024_Edition-000000?style=for-the-badge&logo=rust&logoColor=white
