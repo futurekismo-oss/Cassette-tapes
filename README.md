@@ -1,116 +1,116 @@
-# Cassette Tapes
-***or tapes for short***
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
+<a id="readme-top"></a>
 
-[![Rust](https://img.shields.io/badge/rust-2024_Edition-orange.svg)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[<!-- PLACEHOLDER: Add more shields as needed -->]
+[![License][license-shield]][license-url]
+
+
+
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+<h1 align="center">Cassette Tapes</h1>
+
+  <p align="center">
+    An atomic dotfile switcher for ricing.
+    <br />
+    <br />
+    <a href="https://github.com/futurekismo/cassette-rices#usage">View Demo</a>
+    &middot;
+    <a href="https://github.com/futurekismo/cassette-rices/issues/new">Report Bug</a>
+    &middot;
+    <a href="https://github.com/futurekismo/cassette-rices/issues/new">Request Feature</a>
+  </p>
+</div>
+
+
+
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#directory-structure">Directory Structure</a></li>
+    <li><a href="#tape-manifest-tapetoml">Tape Manifest</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
+
+
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
 
 **Tapes** is an atomic dotfile switcher for ricing. It allows you to instantly switch between complete configuration setups (rices) with a single command, with automatic backups and rollback capability.
 
-## Concept
+A **tape** is a self-contained rice directory containing a `.config/` folder and an optional `tape.toml` manifest. When you **insert** a tape, conflicting configs in `~/.config` are backed up and the tape's configs are symlinked in. When you **eject**, the symlinks are removed and your original config is restored.
 
-A **tape** is a self-contained rice directory containing:
-- A `.config/` folder with your configuration files
-- A `tape.toml` manifest defining metadata, dependencies, and lifecycle hooks
+Key features:
 
-When you **insert** a tape, the folders in your `~/.config` directory that clash with the tapes config are backed up ( renamed to .bak ) then all the folders in tapes config are symlinked individually to your `~/.config`
+* **Atomic switching** — your config is never in a half-state during insert/eject.
+* **Automatic backups** — original `~/.config` folders are always preserved.
+* **Lifecycle hooks** — run commands before/after insert and eject.
+* **Dependency checking** — verify required binaries exist before switching.
+* **Clean uninstalls** — generated files in tapes are cleaned up on eject.
+* **Immutable by default** — tapes are symlinked, preserving the original.
 
-When you **eject**, the symlinks are removed and the .bak are renamed back to normal, returning the state of your previous config
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
-## Features
 
-- **Atomic switching**: Your config is never in a half-state during insert/eject
-- **Automatic backups**: Original `~/.config` folders is always preserved
-- **Lifecycle hooks**: Run commands before/after insert and eject
-- **Dependency checking**: Verify required binaries exist before switching
-- **Clean uninstalls**: Generated files in tapes are cleaned up on eject
-- **Colorful output**: Clear, colored terminal output
-- **Immutable by default**: Tapes are symlinked, preserving the original
+### Built With
 
-## Installation
+* [![Rust][Rust]][Rust-url]
 
-### From Source (Recommended)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
-# Clone the repository
-git clone https://github.com/futurekismo/cassette-rices
-cd cassette-rices
 
-# Build and install
-cargo install --path .
-```
 
-### Using Nix
+<!-- GETTING STARTED -->
+## Getting Started
 
-If you have Nix/flakes configured:
+Get a local copy up and running with a couple of simple steps.
 
-```bash
-# Clone and enter development shell
-git clone https://github.com/futurekismo/cassette-rices
-cd cassette-rices
+### Prerequisites
 
-# Build with nix
-nix build
-```
+* Rust 2024 Edition
 
-## Quick Start
+### Installation
 
-### 1. Create a Tape
+1. Clone the repo
+   ```sh
+   git clone https://github.com/futurekismo/cassette-rices.git
+   cd cassette-rices
+   ```
+2. Build and install
+   ```sh
+   cargo install --path .
+   ```
 
-Create a directory for your rice with a `.config/` folder:
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
-mkdir -p ~/my-hypr-rice/.config/hypr
-# Copy your hyprland config, waybar config, etc. into the .config folder
-```
 
-### 2. Add a Manifest (Optional)
 
-Create a `tape.toml` file in your tape directory:
-
-```toml
-[tape]
-name = "my-hypr-rice"
-version = "0.1.0"
-desc = "My Hyprland + Waybar setup"
-
-[dependencies]
-binaries = ["hyprland", "waybar", "foot"]
-
-[hooks]
-insert = [
-  "echo 'Activating Hyprland rice...'",
-  "pkill -9 waybar || true"
-]
-eject = [
-  "echo 'Rice deactivated'",
-  "killall waybar || true"
-]
-```
-
-### 3. Try It Out
-
-```bash
-# Insert the tape
-tape insert --path ~/my-hypr-rice
-
-# Don't like it? Revert instantly
-tape eject
-```
-
-### 4. Install Permanently (Optional)
-
-Move your tape to the tapes directory for easy access:
-
-```bash
-# Install to the tapes library
-mkdir -p ~/.local/share/tapes
-cp -r ~/my-hypr-rice ~/.local/share/tapes/
-
-# Now you can insert by name
-tape insert my-hypr-rice
-```
-
+<!-- USAGE EXAMPLES -->
 ## Usage
 
 ### Commands
@@ -121,7 +121,6 @@ tape insert my-hypr-rice
 | `tape insert .` | Insert a tape from the current directory |
 | `tape insert --path <path>` | Insert a tape from an arbitrary path |
 | `tape insert --reinsert` | Eject current tape first, then insert (force replace) |
-<!-- | `tape insert --dry-run` | Validate and show what would happen without making changes | -->
 | `tape eject` | Remove current tape and restore original config |
 | `tape show` | Display details of all installed tapes |
 | `tape show <name>` | Display details of a specific tape |
@@ -130,7 +129,7 @@ tape insert my-hypr-rice
 
 ### Examples
 
-```bash
+```sh
 # Clone someone's rice and try it
 git clone https://github.com/user/awesome-rice
 cd awesome-rice
@@ -152,6 +151,77 @@ tape insert my-hypr-rice --reinsert
 tape current
 ```
 
+### Creating a Tape
+
+1. Create a directory with a `.config/` folder:
+   ```sh
+   mkdir -p ~/my-hypr-rice/.config/hypr
+   ```
+
+2. Add a `tape.toml` manifest (optional):
+   ```toml
+   [tape]
+   name = "my-hypr-rice"
+   version = "0.1.0"
+   desc = "My Hyprland + Waybar setup"
+
+   [dependencies]
+   binaries = ["hyprland", "waybar", "foot"]
+
+   [hooks]
+   insert = [
+     "echo 'Activating Hyprland rice...'",
+     "pkill -9 waybar || true"
+   ]
+   eject = [
+     "echo 'Rice deactivated'",
+     "killall waybar || true"
+   ]
+   ```
+
+3. Move it to the tapes library for easy access:
+   ```sh
+   mkdir -p ~/.local/share/tapes
+   cp -r ~/my-hypr-rice ~/.local/share/tapes/
+   tape insert my-hypr-rice
+   ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- HOW IT WORKS -->
+## How It Works
+
+### Insert Flow
+
+1. Validate the tape exists and has a valid `tape.toml` (if present)
+2. Check dependencies (abort if any binaries are missing)
+3. Rename conflicting configs in `~/.config/` to `.bak`
+4. Symlink each config file/dir in the tape directory → `~/.config`
+5. Track original tape file list for cleanup
+6. Run insert hooks
+7. Store the state data in `~/.local/share/tapes/current-tape`
+
+### Eject Flow
+
+1. Check if a tape is inserted via `~/.local/share/tapes/current-tape`
+2. Remove symlinks in `~/.config`
+3. Restore backed-up configs (`.bak` → original)
+4. Run eject hooks
+
+### Safety Features
+
+* **Atomic operations** — insert and eject are atomic, your config is never partially replaced.
+* **Automatic backups** — original `~/.config` folders are always backed up before replacement.
+* **Dependency validation** — missing binaries are caught before switching.
+* **No overwrites** — uses backups, never clobbers existing files directly.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- DIRECTORY STRUCTURE -->
 ## Directory Structure
 
 ```
@@ -172,62 +242,7 @@ tape current
             └── config
 ```
 
-## Tape Manifest (`tape.toml`)
-
-The manifest file defines tape metadata and behavior:
-
-```toml
-[tape]
-name = "my-rice" # Required
-version = "0.1.0" # Required
-desc = "My awesome configuration setup" # Required
-
-[dependencies]
-# List of required binaries - checked before insert
-binaries = ["hyprland", "waybar", "foot"]
-
-[hooks]
-# Commands run after the tape is activated
-insert = [
-  "echo 'Activating rice...'",
-  "pkill -9 waybar || true"
-]
-
-# Commands run after the tape is removed
-eject = [
-  "echo 'Rice deactivated'",
-  "killall waybar || true"
-]
-```
-
-## How It Works
-
-### Insert Flow
-
-1. Validate the tape exists and has a valid `tape.toml` (if present)
-2. Check dependencies (if any binaries are missing, abort)
-3. Rename conflicting configs in `~/.config/` to config.bak
-4. Symlink each config file/dir in the tape directory → `~/.config`
-5. Track original tape file list for cleanup
-6. Run insert hooks
-7. Store the state data in `~/.local/share/tapes/current-tape`
-
-### Eject Flow
-
-1. Check if a tape is inserted via `~/.local/share/tapes/current-tape`
-2. Remove symlinks tapes symlink in `~/.config`
-3. Unback up previous configs in `~/.config`
-5. Run eject hooks
-
-## Safety Features
-
-- **Atomic operations**: Insert and eject are atomic — your config is never partially replaced
-- **Automatic backups**: Original `~/.config` folders are always backed up before replacement
-- **Dependency validation**: Missing binaries are caught before switching
-- **No overwrites**: Uses backups, never clobbers existing files directly
-- **Clean cleanup**: Generated files in tapes are automatically removed on eject
-
-## Project Structure
+### Project Structure
 
 ```
 cassette-rices/
@@ -245,67 +260,96 @@ cassette-rices/
         └── show.rs       # Show/list command implementation
 ```
 
-## Building
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
-# Development build
-cargo build
 
-# Release build
-cargo build --release
 
-# Run tests
-cargo test
+<!-- TAPE MANIFEST -->
+## Tape Manifest (`tape.toml`)
 
-# Format code
-cargo fmt
+The manifest file defines tape metadata and behavior:
 
-# Lint
-cargo clippy
+```toml
+[tape]
+name = "my-rice"          # Required
+version = "0.1.0"         # Required
+desc = "My awesome setup" # Required
+
+[dependencies]
+binaries = ["hyprland", "waybar", "foot"]
+
+[hooks]
+insert = [
+  "echo 'Activating rice...'",
+  "pkill -9 waybar || true"
+]
+eject = [
+  "echo 'Rice deactivated'",
+  "killall waybar || true"
+]
 ```
 
-## Configuration
+### Configuration Conventions
 
-Tapes uses the following conventions:
+* **Tape library**: `~/.local/share/tapes/` (override with `--path`)
+* **State file**: `~/.local/share/tapes/current-tape` — stores the currently inserted tape
+* **Manifest file**: `tape.toml` (in each tape directory)
 
-- **Tape library**: `~/.local/share/tapes/` (can be overridden with `--path`)
-- **State File**: `~/.local/share/tapes/current-tape` ( stores the currently inserted tape ) # Do not touch this file
-- **Manifest file**: `tape.toml` (in each tape directory)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## Dependencies
 
-- Rust 2024 Edition
-- `serde` with derive feature - TOML parsing
-- `toml` - TOML parsing library
-- `anyhow` - Error handling
-- `walkdir` - Directory traversal
-- `tempfile` - Temporary file handling
-- `dirs` - XDG directory location
-- `yansi` - Colored terminal output
-- `clap` with derive feature - CLI argument parsing
 
+<!-- ROADMAP -->
 ## Roadmap
 
-See [DESIGN.md](DESIGN.md) for the current design and [VISION.md](VISION.md) for future ideas including:
+- [ ] Composable tapes (multiple active simultaneously)
+- [ ] State tracking for clean uninstalls
+- [ ] Lock files for reproducible tape states
+- [ ] Remote tape support (`tape run <url>`)
+- [ ] Conflict detection between multiple tapes
+- [ ] Rollback capability for individual files
+- [ ] TUI
 
-[ ] Composable tapes (multiple active simultaneously)
-[ ] State tracking for clean uninstalls
-[ ] Lock files for reproducible tape states
-[ ] Remote tape support (`tape run <url>`)
-[ ] Conflict detection between multiple tapes
-[ ] Rollback capability for individual files
-[ ] Tui
+See the [open issues](https://github.com/futurekismo/cassette-rices/issues) for a full list of proposed features (and known issues).
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-## License
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
 
-This project is licensed under the MIT License.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-- Inspired by Nix flakes and other modular configuration management systems
-- Built with Rust for safety and performance
-- Designed for the ricing community
+* Inspired by Nix flakes and other modular configuration management systems
+* Built with Rust for safety and performance
+* Designed for the ricing community
+* [Best-README-Template](https://github.com/othneildrew/Best-README-Template)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/futurekismo/cassette-rices.svg?style=for-the-badge
+[contributors-url]: https://github.com/futurekismo/cassette-rices/graphs/contributors
+[license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge
+[license-url]: https://github.com/futurekismo/cassette-rices/blob/master/LICENSE.txt
+[Rust]: https://img.shields.io/badge/Rust-2024_Edition-000000?style=for-the-badge&logo=rust&logoColor=white
+[Rust-url]: https://www.rust-lang.org/
