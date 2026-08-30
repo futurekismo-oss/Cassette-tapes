@@ -16,8 +16,6 @@
     An atomic dotfile switcher for ricing.
     <br />
     <br />
-    <a href="https://github.com/futurekismo-oss/cassette-rices#usage">View Demo</a>
-    &middot;
     <a href="https://github.com/futurekismo-oss/cassette-rices/issues/new">Report Bug</a>
     &middot;
     <a href="https://github.com/futurekismo-oss/cassette-rices/issues/new">Request Feature</a>
