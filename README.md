@@ -12,6 +12,8 @@
 <div align="center">
 <h1 align="center">Cassette Tapes</h1>
 
+  <img src="media/icon.svg" alt="Logo" width="200">
+
   <p align="center">
     An atomic dotfile switcher for ricing.
     <br />
@@ -346,6 +348,6 @@ Don't forget to give the project a star! Thanks again!
 [stars-shield]: https://img.shields.io/github/stars/futurekismo-oss/cassette-rices.svg?style=for-the-badge
 [stars-url]: https://github.com/futurekismo-oss/cassette-rices/stargazers
 [license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge
-[license-url]: https://github.com/futurekismo-oss/cassette-rices/blob/master/LICENSE.txt
+[license-url]: https://github.com/futurekismo-oss/cassette-rices/blob/master/LICENSE
 [Rust]: https://img.shields.io/badge/Rust-2024_Edition-000000?style=for-the-badge&logo=rust&logoColor=white
 [Rust-url]: https://www.rust-lang.org/
