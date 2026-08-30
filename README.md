@@ -4,9 +4,7 @@
 
 <!-- PROJECT SHIELDS -->
 [![Contributors][contributors-shield]][contributors-url]
-[<!-- PLACEHOLDER: Add more shields as needed -->]
 [![License][license-shield]][license-url]
-
 
 
 <!-- PROJECT LOGO -->
