@@ -18,11 +18,11 @@
     An atomic dotfile switcher for ricing.
     <br />
     <br />
-    <a href="https://github.com/futurekismo/cassette-rices#usage">View Demo</a>
+    <a href="https://github.com/futurekismo-oss/cassette-rices#usage">View Demo</a>
     &middot;
-    <a href="https://github.com/futurekismo/cassette-rices/issues/new">Report Bug</a>
+    <a href="https://github.com/futurekismo-oss/cassette-rices/issues/new">Report Bug</a>
     &middot;
-    <a href="https://github.com/futurekismo/cassette-rices/issues/new">Request Feature</a>
+    <a href="https://github.com/futurekismo-oss/cassette-rices/issues/new">Request Feature</a>
   </p>
 </div>
 
@@ -98,7 +98,7 @@ Get a local copy up and running with a couple of simple steps.
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/futurekismo/cassette-rices.git
+   git clone https://github.com/futurekismo-oss/cassette-rices.git
    cd cassette-rices
    ```
 2. Build and install
@@ -310,7 +310,7 @@ eject = [
 - [ ] Rollback capability for individual files
 - [ ] TUI
 
-See the [open issues](https://github.com/futurekismo/cassette-rices/issues) for a full list of proposed features (and known issues).
+See the [open issues](https://github.com/futurekismo-oss/cassette-rices/issues) for a full list of proposed features (and known issues).
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -347,9 +347,9 @@ Don't forget to give the project a star! Thanks again!
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[contributors-shield]: https://img.shields.io/github/contributors/futurekismo/cassette-rices.svg?style=for-the-badge
-[contributors-url]: https://github.com/futurekismo/cassette-rices/graphs/contributors
+[contributors-shield]: https://img.shields.io/github/contributors/futurekismo-oss/cassette-rices.svg?style=for-the-badge
+[contributors-url]: https://github.com/futurekismo-oss/cassette-rices/graphs/contributors
 [license-shield]: https://img.shields.io/badge/license-MIT-blue.svg?style=for-the-badge
-[license-url]: https://github.com/futurekismo/cassette-rices/blob/master/LICENSE.txt
+[license-url]: https://github.com/futurekismo-oss/cassette-rices/blob/master/LICENSE.txt
 [Rust]: https://img.shields.io/badge/Rust-2024_Edition-000000?style=for-the-badge&logo=rust&logoColor=white
 [Rust-url]: https://www.rust-lang.org/
