@@ -13,10 +13,12 @@
 
 <img src="media/icon.svg" alt="Logo" width="200">
 
-<h1 align="center">Cassette Tapes</h1>
 
   <p align="center">
+    <h1 align="center">Cassette Tapes</h1>
+
     An atomic dotfile switcher for ricing.
+
     <br />
     <br />
     <a href="https://github.com/futurekismo-oss/cassette-rices/issues/new">Report Bug</a>
