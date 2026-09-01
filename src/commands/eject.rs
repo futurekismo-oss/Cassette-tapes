@@ -111,7 +111,7 @@ fn get_lastest_backup(path: &Path) -> PathBuf {
 
 pub fn run_eject_hooks(tape: TapeManifest) -> Result<()> {
     if let Some(hooks) = &tape.hooks {
-        if !hooks.insert.is_empty() {
+        if !hooks.eject.is_empty() {
             for hook in &hooks.eject {
                 if debug::is_debug() {
                     debug::hook(hook);
