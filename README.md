@@ -55,6 +55,10 @@
 </details>
 
 
+```
+This is a personal tool
+It has a lot of rough edges but it works on my machine
+```
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
