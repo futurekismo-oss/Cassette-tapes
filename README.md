@@ -26,6 +26,11 @@
 </div>
 
 
+```
+This is a personal tool
+It has a lot of rough edges but it works on my machine
+```
+
 
 <!-- TABLE OF CONTENTS -->
 <details>
@@ -53,6 +58,7 @@
     <li><a href="#acknowledgments">Acknowledgments</a></li>
   </ol>
 </details>
+
 
 
 
