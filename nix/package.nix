@@ -10,9 +10,9 @@ rustPlatform.buildRustPackage {
   src = fetchFromGitHub {
     owner = "futurekismo-oss";
     repo = "Cassette-tapes";
-    rev = "490d80ec6788e62672b3bb197b461a6bc5605eb5";
-    hash = "sha256-ba3ebCvslLbv8peYjG3vC/5cKRM8+QztmhkY9IWXRZQ=";
+    rev = "bef75c5de02cb5dae78c48212ac24bce032d9bf3";
+    hash = "sha256-vhGwhU/6HTzb+CGyAB85JiHy047EwlPRUN0L+FW2PJM=";
   };
 
-  cargoHash = "";
+  cargoHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 }
